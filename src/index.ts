@@ -213,36 +213,36 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 
 												⌛ У каждого человека есть определённые взгляды на жизнь. Что вы можете сказать о своих?
 
-												📈 Твёрдые и постоянные.
-												📉 Очень часто меняются, иногда даже без причины.
-												🌫 Нужна серьёзная причина, чтобы повлиять на них.
-												🌦 Зачастую эти взгляды зависят от ситуации и окружающих людей.
+												✊ Твёрдые и постоянные.
+												🤷‍♂ Очень часто меняются, иногда даже без причины.
+												💥 Нужна серьёзная причина, чтобы повлиять на них.
+												💬 Зачастую эти взгляды зависят от ситуации и окружающих людей.
 											`,
 											{
 												keyboard: Keyboard.builder()
 												.textButton({
-													label: '📈',
+													label: '✊',
 													payload: {
 														command: 'sliz'
 													},
 													color: 'secondary'
 												})
 												.textButton({
-													label: '📉',
+													label: '🤷‍♂',
 													payload: {
 														command: 'grif'
 													},
 													color: 'secondary'
 												})
 												.textButton({
-													label: '🌫',
+													label: '💥',
 													payload: {
 														command: 'coga'
 													},
 													color: 'secondary'
 												})
 												.textButton({
-													label: '🌦',
+													label: '💬',
 													payload: {
 														command: 'puff'
 													},
@@ -373,8 +373,62 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 												}).oneTime().inline()
 											}
 		)
-		await context.send(`${answer1.payload.command} ${answer2.payload.command} ${answer3.payload.command}
-		${answer4.payload.command} ${answer5.payload.command} ${answer6.payload.command} ${answer7.payload.command}`)
+		const answer8 = await context.question(`В потоке мыслей всплывает последний вопрос:
+
+												⌛ На какой факультет хотелось бы больше всего?
+
+												💙 Когтевран
+												💚 Слизерин
+												💛 Пуффендуй
+												❤ Гриффиндор
+											`,
+											{
+												keyboard: Keyboard.builder()
+												.textButton({
+													label: '💙',
+													payload: {
+														command: 'coga'
+													},
+													color: 'secondary'
+												})
+												.textButton({
+													label: '💚',
+													payload: {
+														command: 'sliz'
+													},
+													color: 'secondary'
+												})
+												.textButton({
+													label: '💛',
+													payload: {
+														command: 'puff'
+													},
+													color: 'secondary'
+												})
+												.textButton({
+													label: '❤',
+													payload: {
+														command: 'grif'
+													},
+													color: 'secondary'
+												}).oneTime().inline()
+											}
+		)
+		const result = `${answer1.payload.command} ${answer2.payload.command} ${answer3.payload.command} ${answer4.payload.command} ${answer5.payload.command} ${answer6.payload.command} ${answer7.payload.command} ${answer8.payload.command}`
+		const ans = result.split(" ")
+		console.log(ans)
+		const complet:any = {
+			'grif': 0,
+			'puff': 0,
+			'coga': 0,
+			'sliz': 0
+		}
+		for (let i=0; i < ans.length; i++) {
+			complet[`${ans[i]}`] = complet[`${ans[i]}`]+1
+		}
+		console.log(complet)
+		const win = Object.entries(complet).reduce((acc:any, curr:any) => acc[1] > curr[1] ? acc : curr)[0]
+		console.log(`Побеждает ${win}`)
 	}
 	return next();
 })
