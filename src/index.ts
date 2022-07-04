@@ -51,7 +51,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 	if (!user_check) {
 		//согласие на обработку
 		const answer = await context.question(
-			'Согласны-ли Вы на обработку персональных данных?',
+			'Желаете пройти распределение?',
 			{
 				keyboard: Keyboard.builder()
 				.textButton({
@@ -85,6 +85,9 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 							И вот перед вами распределяющая шляпа...`
 		);
 		
+		const name = await context.question(`Введите имя персонажа:`)
+		console.log(name)
+
 		const answer1 = await context.question(`Внезапно шляпа оказывается на вас копается в вашей голове!
 												В потоке мыслей всплывает первый вопрос:
 
@@ -375,48 +378,63 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		)
 		const answer8 = await context.question(`В потоке мыслей всплывает последний вопрос:
 
-												⌛ На какой факультет хотелось бы больше всего?
+												⌛ Выберите два наиболее предпочтительных для вас факультета...
 
-												💙 Когтевран
-												💚 Слизерин
-												💛 Пуффендуй
-												❤ Гриффиндор
+												🦅 Когтевран
+												🐍 Слизерин
+												🦡 Пуффендуй
+												🦁 Гриффиндор
 											`,
 											{
 												keyboard: Keyboard.builder()
 												.textButton({
-													label: '💙',
+													label: '🦡🦁',
 													payload: {
-														command: 'coga'
+														command: 'puff grif'
 													},
 													color: 'secondary'
 												})
 												.textButton({
-													label: '💚',
+													label: '🦡🐍',
 													payload: {
-														command: 'sliz'
+														command: 'puff sliz'
 													},
 													color: 'secondary'
 												})
 												.textButton({
-													label: '💛',
+													label: '🦡🦅',
 													payload: {
-														command: 'puff'
+														command: 'puff coga'
+													},
+													color: 'secondary'
+												})
+												.row()
+												.textButton({
+													label: '🦁🐍',
+													payload: {
+														command: 'grif sliz'
 													},
 													color: 'secondary'
 												})
 												.textButton({
-													label: '❤',
+													label: '🦁🦅',
 													payload: {
-														command: 'grif'
+														command: 'grif coga'
 													},
 													color: 'secondary'
-												}).oneTime().inline()
+												})
+												.textButton({
+													label: '🦅🐍',
+													payload: {
+														command: 'coga sliz'
+													},
+													color: 'secondary'
+												})
+												.oneTime().inline()
 											}
 		)
 		const result = `${answer1.payload.command} ${answer2.payload.command} ${answer3.payload.command} ${answer4.payload.command} ${answer5.payload.command} ${answer6.payload.command} ${answer7.payload.command} ${answer8.payload.command}`
 		const ans = result.split(" ")
-		console.log(ans)
 		const complet:any = {
 			'grif': 0,
 			'puff': 0,
@@ -426,13 +444,12 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		for (let i=0; i < ans.length; i++) {
 			complet[`${ans[i]}`] = complet[`${ans[i]}`]+1
 		}
-		console.log(complet)
 		const win = Object.entries(complet).reduce((acc:any, curr:any) => acc[1] > curr[1] ? acc : curr)[0]
-		console.log(`Побеждает ${win}`)
 		const data_answer: any = {
 			"coga": `Немного подумав, Шляпа огласила вердикт:
 
-			ТВОЙ ФАКУЛЬТЕТ КОГТЕВРАН🎉🎊 💙💙
+			ТВОЙ ФАКУЛЬТЕТ КОГТЕВРАН🎉🎊💙💙
+			ученик(ца) ${name.text}!
 			
 			Подай заявку в гостиную:
 			Пароль: ЗНАНИЕ - СИЛА (пароль отправить в сообщения сообществу гостиной)
@@ -449,7 +466,8 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			'puff': `Немного подумав, Шляпа огласила вердикт:
 
 			ТВОЙ ФАКУЛЬТЕТ ПУФФЕНДУЙ🎉🎊💛💛
-			
+			ученик(ца) ${name.text}!
+
 			Подай заявку в гостиную:
 			Пароль: ДОБРОЕ СЕРДЦЕ (пароль отправить в сообщения сообществу гостиной)
 			https://vk.com/club200655488
@@ -465,7 +483,8 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			'sliz': `Немного подумав, Шляпа огласила вердикт:
 
 			ТВОЙ ФАКУЛЬТЕТ СЛИЗЕРИН🎉🎊💚💚
-			
+			ученик(ца) ${name.text}!
+
 			Подай заявку в гостиную:
 			Пароль: ЧИСТАЯ КРОВЬ (пароль отправить в сообщения сообществу гостиной)
 			https://vk.com/slytherin_hogonline
@@ -481,7 +500,8 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			'griff': `Немного подумав, Шляпа огласила вердикт:
 
 			ТВОЙ ФАКУЛЬТЕТ ГРИФФИНДОР ❤❤🎉🎊
-			
+			ученик(ца) ${name.text}!
+
 			Подай заявку в гостиную: https://vk.com/griffindor_hogonline
 			Пароль: КАПУТ ДРАКОНИС (пароль отправить в сообщения сообществу гостиной)
 			
