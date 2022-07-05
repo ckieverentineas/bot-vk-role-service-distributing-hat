@@ -85,7 +85,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 							И вот перед вами распределяющая шляпа...`
 		);
 		
-		const name = await context.question(`Введите имя персонажа:`)
+		const name = await context.question(`Введите имя персонажа (канонных персов брать нельзя, по типу как Гарри Поттер и т.д.):`)
 		console.log(name)
 
 		const answer1 = await context.question(`Внезапно шляпа оказывается на вас копается в вашей голове!
@@ -515,6 +515,19 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			Поменять факультет можно только на 2 курсе обучения.`
 		}
 		context.send(`${data_answer[win]}`)
+		const save = await prisma.user.create({
+			data: {
+				idvk: context.senderId,
+				name: name.text,
+				coga: complet.coga,
+				puff: complet.puff,
+				grif: complet.grif,
+				sliz: complet.sliz,
+				facult: win
+			}
+		})
+		console.log(`Success save user idvk: ${context.senderId}`)
+		console.log(save)
 	}
 	return next();
 })

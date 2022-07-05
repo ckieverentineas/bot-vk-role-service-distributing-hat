@@ -7,7 +7,7 @@ import { IQuestionMessageContext } from "vk-io-question";
 const prisma = new PrismaClient()
 
 export function InitGameRoutes(hearManager: HearManager<IQuestionMessageContext>): void {
-	hearManager.hear(/init/, async (context) => {
+	/*hearManager.hear(/init/, async (context) => {
 		//user
 		const user_type = await prisma.userType.createMany({
 			data: [
@@ -54,5 +54,5 @@ export function InitGameRoutes(hearManager: HearManager<IQuestionMessageContext>
 		console.log((facult ? "Success" : "Fail") + " init Facults")
 
 		context.send('Игра инициализированна успешно.')
-	})
+	})*/
 }

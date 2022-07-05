@@ -1,0 +1,12 @@
+-- CreateTable
+CREATE TABLE "User" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "idvk" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "coga" INTEGER NOT NULL,
+    "puff" INTEGER NOT NULL,
+    "grif" INTEGER NOT NULL,
+    "sliz" INTEGER NOT NULL,
+    "facult" TEXT NOT NULL,
+    "crdate" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

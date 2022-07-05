@@ -6,34 +6,20 @@ generator client {
 }
 
 datasource db {
-  provider = "postgres"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 //user
 
 model User {
-  id           Int      @id @default(autoincrement())
-  idvk         Int      
-  user_type    UserType @relation(fields: [id_user_type], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_user_type Int
-  gold         Int
-  crdate       DateTime @default(now())
-}
-
-model UserType {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  description String
-  label       String
-  crdate      DateTime @default(now())
-  User        User[]
-}
-
-model Facult {
-  id       Int      @id @default(autoincrement())
-  name        String   @unique
-  description String
-  label       String
-  crdate   DateTime @default(now())
+  id     Int      @id @default(autoincrement())
+  idvk   Int
+  name   String
+  coga   Int
+  puff   Int
+  grif   Int
+  sliz   Int
+  facult String
+  crdate DateTime @default(now())
 }
