@@ -8,7 +8,7 @@ import { IQuestionMessageContext } from "vk-io-question";
 const prisma = new PrismaClient()
 
 export function registerUserRoutes(hearManager: HearManager<IQuestionMessageContext>): void {
-	hearManager.hear(/удалиться/, async (context) => {
+	hearManager.hear(/0/, async (context) => {
         const get_user:any = await prisma.user.findFirst({
             where: {
                 idvk: context.senderId
