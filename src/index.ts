@@ -515,7 +515,6 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			}
 		}
 		const ans = result.split(" ")
-		console.log(ans)
 		const complet:any = {
 			'grif': 0,
 			'puff': 0,
@@ -526,7 +525,6 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			complet[`${ans[i]}`] = complet[`${ans[i]}`]+1
 		}
 		const win = Object.entries(complet).reduce((acc:any, curr:any) => acc[1] > curr[1] ? acc : curr)[0]
-		console.log(win)
 		const data_answer: any = {
 			"coga": `Немного подумав, Шляпа огласила вердикт:
 
