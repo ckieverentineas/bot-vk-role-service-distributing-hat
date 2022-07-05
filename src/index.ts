@@ -99,7 +99,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		let answer_check = false
 		let result = ""
 		while (answer_check == false) {
-			const answer1 = await context.question(`Внезапно шляпа оказывается на вас копается в вашей голове!
+			const answer1 = await context.question(`Внезапно шляпа оказывается на вас, копается в вашей голове!
 												В потоке мыслей всплывает первый вопрос:
 
 												⌛ Какое зелье ты бы сварил(а)?
