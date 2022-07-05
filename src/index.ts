@@ -84,11 +84,22 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 							Персонал Хогвартса онлайн: +100500 профессоров.
 							И вот перед вами распределяющая шляпа...`
 		);
-		
-		const name = await context.question(`Введите имя персонажа (канонных персов брать нельзя, по типу как Гарри Поттер и т.д.):`)
-		console.log(name)
-
-		const answer1 = await context.question(`Внезапно шляпа оказывается на вас копается в вашей голове!
+		let name_check = false
+		let datas: any = []
+		while (name_check == false) {
+			const name = await context.question(`Введите имя персонажа (канонных персов брать нельзя, по типу как Гарри Поттер и т.д.):
+			❗Максимум 30 символов`)
+			if (name.text.length <= 30) {
+				name_check = true
+				datas.push({name: `${name.text}`})
+			} else {
+				context.send(`Нужно было вести ФИО персонажа до 30 символов включительно!`)
+			}
+		}
+		let answer_check = false
+		let result = ""
+		while (answer_check == false) {
+			const answer1 = await context.question(`Внезапно шляпа оказывается на вас копается в вашей голове!
 												В потоке мыслей всплывает первый вопрос:
 
 												⌛ Какое зелье ты бы сварил(а)?
@@ -129,312 +140,382 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 													color: 'secondary'
 												}).oneTime().inline()
 											}
-		)
-		const answer2 = await context.question(`В потоке мыслей всплывает второй вопрос:
+			)
+			if (!answer1.payload) {
+				context.send(`Жмите только по кнопкам с иконками!`)
+			} else {
+				result += `${answer1.payload.command} `
+				answer_check = true
+			}
+		}
+		answer_check = false
+		while (answer_check == false) {
+			const answer2 = await context.question(`В потоке мыслей всплывает второй вопрос:
 
-												⌛ Ты входишь в заколдованный сад. Какую из диковинок захотелось бы тебе рассмотреть первой?
+													⌛ Ты входишь в заколдованный сад. Какую из диковинок захотелось бы тебе рассмотреть первой?
 
-												🌳 Дерево с серебряными яблоками
-												🗿 Статуя старого волшебника
-												🌀 Глубокий колодец
-												🥀 Ярко-красные цветы
-											`,
-											{
-												keyboard: Keyboard.builder()
-												.textButton({
-													label: '🌳',
-													payload: {
-														command: 'grif'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🗿',
-													payload: {
-														command: 'coga'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🌀',
-													payload: {
-														command: 'sliz'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🥀',
-													payload: {
-														command: 'puff'
-													},
-													color: 'secondary'
-												}).oneTime().inline()
-											}
-		)
-		const answer3 = await context.question(`В потоке мыслей всплывает третий вопрос:
+													🌳 Дерево с серебряными яблоками
+													🗿 Статуя старого волшебника
+													🌀 Глубокий колодец
+													🥀 Ярко-красные цветы
+												`,
+												{
+													keyboard: Keyboard.builder()
+													.textButton({
+														label: '🌳',
+														payload: {
+															command: 'grif'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🗿',
+														payload: {
+															command: 'coga'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🌀',
+														payload: {
+															command: 'sliz'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🥀',
+														payload: {
+															command: 'puff'
+														},
+														color: 'secondary'
+													}).oneTime().inline()
+												}
+			)
+			if (!answer2.payload) {
+				context.send(`Жмите только по кнопкам с иконками!`)
+			} else {
+				result += `${answer2.payload.command} `
+				answer_check = true
+			}
+		}
+		answer_check = false
+		while (answer_check == false) {
+			const answer3 = await context.question(`В потоке мыслей всплывает третий вопрос:
 
-												⌛ Один раз в столетие на кустарнике Flutterby распускаются цветы, которые подстраивают свой аромат, чтобы завлечь неосторожных. Если бы кустарник заманил вас, он имел бы запах...
+													⌛ Один раз в столетие на кустарнике Flutterby распускаются цветы, которые подстраивают свой аромат, чтобы завлечь неосторожных. Если бы кустарник заманил вас, он имел бы запах...
 
-												🔥 Костра
-												📜 Пергамента
-												⚓ Моря
-												🏤 Дома
-											`,
-											{
-												keyboard: Keyboard.builder()
-												.textButton({
-													label: '🔥',
-													payload: {
-														command: 'grif'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '📜',
-													payload: {
-														command: 'coga'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '⚓',
-													payload: {
-														command: 'sliz'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🏤',
-													payload: {
-														command: 'puff'
-													},
-													color: 'secondary'
-												}).oneTime().inline()
-											}
-		)
-		const answer4 = await context.question(`В потоке мыслей всплывает четвертый вопрос:
+													🔥 Костра
+													📜 Пергамента
+													⚓ Моря
+													🏤 Дома
+												`,
+												{
+													keyboard: Keyboard.builder()
+													.textButton({
+														label: '🔥',
+														payload: {
+															command: 'grif'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '📜',
+														payload: {
+															command: 'coga'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '⚓',
+														payload: {
+															command: 'sliz'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🏤',
+														payload: {
+															command: 'puff'
+														},
+														color: 'secondary'
+													}).oneTime().inline()
+												}
+			)
+			if (!answer3.payload) {
+				context.send(`Жмите только по кнопкам с иконками!`)
+			} else {
+				result += `${answer3.payload.command} `
+				answer_check = true
+			}
+		}
+		answer_check = false
+		while (answer_check == false) {
+			const answer4 = await context.question(`В потоке мыслей всплывает четвертый вопрос:
 
-												⌛ У каждого человека есть определённые взгляды на жизнь. Что вы можете сказать о своих?
+													⌛ У каждого человека есть определённые взгляды на жизнь. Что вы можете сказать о своих?
 
-												✊ Твёрдые и постоянные.
-												🤷‍♂ Очень часто меняются, иногда даже без причины.
-												💥 Нужна серьёзная причина, чтобы повлиять на них.
-												💬 Зачастую эти взгляды зависят от ситуации и окружающих людей.
-											`,
-											{
-												keyboard: Keyboard.builder()
-												.textButton({
-													label: '✊',
-													payload: {
-														command: 'sliz'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🤷‍♂',
-													payload: {
-														command: 'grif'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '💥',
-													payload: {
-														command: 'coga'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '💬',
-													payload: {
-														command: 'puff'
-													},
-													color: 'secondary'
-												}).oneTime().inline()
-											}
-		)
-		const answer5 = await context.question(`В потоке мыслей всплывает пятый вопрос:
-												
-												⌛ Какая роль вам чаще всего отведена в компании?
+													✊ Твёрдые и постоянные.
+													🤷‍♂ Очень часто меняются, иногда даже без причины.
+													💥 Нужна серьёзная причина, чтобы повлиять на них.
+													💬 Зачастую эти взгляды зависят от ситуации и окружающих людей.
+												`,
+												{
+													keyboard: Keyboard.builder()
+													.textButton({
+														label: '✊',
+														payload: {
+															command: 'sliz'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🤷‍♂',
+														payload: {
+															command: 'grif'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '💥',
+														payload: {
+															command: 'coga'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '💬',
+														payload: {
+															command: 'puff'
+														},
+														color: 'secondary'
+													}).oneTime().inline()
+												}
+			)
+			if (!answer4.payload) {
+				context.send(`Жмите только по кнопкам с иконками!`)
+			} else {
+				result += `${answer4.payload.command} `
+				answer_check = true
+			}
+		}
+		answer_check = false
+		while (answer_check == false) {
+			const answer5 = await context.question(`В потоке мыслей всплывает пятый вопрос:
+													
+													⌛ Какая роль вам чаще всего отведена в компании?
 
-												🔱 Негласный лидер
-												👑 Тот самый заводила, который чаще всего собирает всех гулять
-												🍼 Тот самый друг-мамочка, который всегда заботится обо всех
-												🧠 Тот, у кого найдётся ответ на любой вопрос
-											`,
-											{
-												keyboard: Keyboard.builder()
-												.textButton({
-													label: '🔱',
-													payload: {
-														command: 'sliz'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '👑',
-													payload: {
-														command: 'grif'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🍼',
-													payload: {
-														command: 'puff'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🧠',
-													payload: {
-														command: 'coga'
-													},
-													color: 'secondary'
-												}).oneTime().inline()
-											}
-		)
-		const answer6 = await context.question(`В потоке мыслей всплывает шестой вопрос:
+													🔱 Негласный лидер
+													👑 Тот самый заводила, который чаще всего собирает всех гулять
+													🍼 Тот самый друг-мамочка, который всегда заботится обо всех
+													🧠 Тот, у кого найдётся ответ на любой вопрос
+												`,
+												{
+													keyboard: Keyboard.builder()
+													.textButton({
+														label: '🔱',
+														payload: {
+															command: 'sliz'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '👑',
+														payload: {
+															command: 'grif'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🍼',
+														payload: {
+															command: 'puff'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🧠',
+														payload: {
+															command: 'coga'
+														},
+														color: 'secondary'
+													}).oneTime().inline()
+												}
+			)
+			if (!answer5.payload) {
+				context.send(`Жмите только по кнопкам с иконками!`)
+			} else {
+				result += `${answer5.payload.command} `
+				answer_check = true
+			}
+		}
+		answer_check = false
+		while (answer_check == false) {
+			const answer6 = await context.question(`В потоке мыслей всплывает шестой вопрос:
 
-												⌛ Какой сюжет книги вас наиболее привлекает?
+													⌛ Какой сюжет книги вас наиболее привлекает?
 
-												💍 Атмосферный роман, полный взаимопонимания и любви между главными героями
-												⚔ Боевик с сильным главным героем, который сражается против антагониста
-												🔎 Детектив с находчивой главной героиней, которая постоянно находится в конфликте с окружающим её миром
-												🚀 История про фантастические вселенные и их обитателей, населяющих планеты за сотни километров от земли
-											`,
-											{
-												keyboard: Keyboard.builder()
-												.textButton({
-													label: '💍',
-													payload: {
-														command: 'puff'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '⚔',
-													payload: {
-														command: 'grif'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🔎',
-													payload: {
-														command: 'sliz'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🚀',
-													payload: {
-														command: 'coga'
-													},
-													color: 'secondary'
-												}).oneTime().inline()
-											}
-		)
-		const answer7 = await context.question(`В потоке мыслей всплывает седьмой вопрос:
+													💍 Атмосферный роман, полный взаимопонимания и любви между главными героями
+													⚔ Боевик с сильным главным героем, который сражается против антагониста
+													🔎 Детектив с находчивой главной героиней, которая постоянно находится в конфликте с окружающим её миром
+													🚀 История про фантастические вселенные и их обитателей, населяющих планеты за сотни километров от земли
+												`,
+												{
+													keyboard: Keyboard.builder()
+													.textButton({
+														label: '💍',
+														payload: {
+															command: 'puff'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '⚔',
+														payload: {
+															command: 'grif'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🔎',
+														payload: {
+															command: 'sliz'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🚀',
+														payload: {
+															command: 'coga'
+														},
+														color: 'secondary'
+													}).oneTime().inline()
+												}
+			)
+			if (!answer6.payload) {
+				context.send(`Жмите только по кнопкам с иконками!`)
+			} else {
+				result += `${answer6.payload.command} `
+				answer_check = true
+			}
+		}
+		answer_check = false
+		while (answer_check == false) {
+			const answer7 = await context.question(`В потоке мыслей всплывает седьмой вопрос:
 
-												⌛ Какой ваш любимый напиток?
+													⌛ Какой ваш любимый напиток?
 
-												🍵 Чай с лимоном
-												☕ Крепкий кофе
-												🍹 Свежевыжатый сок
-												🍥 Какао с зефирками
-											`,
-											{
-												keyboard: Keyboard.builder()
-												.textButton({
-													label: '🍵',
-													payload: {
-														command: 'grif'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '☕',
-													payload: {
-														command: 'coga'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🍹',
-													payload: {
-														command: 'sliz'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🍥',
-													payload: {
-														command: 'puff'
-													},
-													color: 'secondary'
-												}).oneTime().inline()
-											}
-		)
-		const answer8 = await context.question(`В потоке мыслей всплывает последний вопрос:
+													🍵 Чай с лимоном
+													☕ Крепкий кофе
+													🍹 Свежевыжатый сок
+													🍥 Какао с зефирками
+												`,
+												{
+													keyboard: Keyboard.builder()
+													.textButton({
+														label: '🍵',
+														payload: {
+															command: 'grif'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '☕',
+														payload: {
+															command: 'coga'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🍹',
+														payload: {
+															command: 'sliz'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🍥',
+														payload: {
+															command: 'puff'
+														},
+														color: 'secondary'
+													}).oneTime().inline()
+												}
+			)
+			if (!answer7.payload) {
+				context.send(`Жмите только по кнопкам с иконками!`)
+			} else {
+				result += `${answer7.payload.command} `
+				answer_check = true
+			}
+		}
+		answer_check = false
+		while (answer_check == false) {
+			const answer8 = await context.question(`В потоке мыслей всплывает последний вопрос:
 
-												⌛ Выберите два наиболее предпочтительных для вас факультета...
+													⌛ Выберите два наиболее предпочтительных для вас факультета...
 
-												🦅 Когтевран
-												🐍 Слизерин
-												🦡 Пуффендуй
-												🦁 Гриффиндор
-											`,
-											{
-												keyboard: Keyboard.builder()
-												.textButton({
-													label: '🦡🦁',
-													payload: {
-														command: 'puff grif'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🦡🐍',
-													payload: {
-														command: 'puff sliz'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🦡🦅',
-													payload: {
-														command: 'puff coga'
-													},
-													color: 'secondary'
-												})
-												.row()
-												.textButton({
-													label: '🦁🐍',
-													payload: {
-														command: 'grif sliz'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🦁🦅',
-													payload: {
-														command: 'grif coga'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🦅🐍',
-													payload: {
-														command: 'coga sliz'
-													},
-													color: 'secondary'
-												})
-												.oneTime().inline()
-											}
-		)
-		const result = `${answer1.payload.command} ${answer2.payload.command} ${answer3.payload.command} ${answer4.payload.command} ${answer5.payload.command} ${answer6.payload.command} ${answer7.payload.command} ${answer8.payload.command}`
+													🦅 Когтевран
+													🐍 Слизерин
+													🦡 Пуффендуй
+													🦁 Гриффиндор
+												`,
+												{
+													keyboard: Keyboard.builder()
+													.textButton({
+														label: '🦡🦁',
+														payload: {
+															command: 'puff grif'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🦡🐍',
+														payload: {
+															command: 'puff sliz'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🦡🦅',
+														payload: {
+															command: 'puff coga'
+														},
+														color: 'secondary'
+													})
+													.row()
+													.textButton({
+														label: '🦁🐍',
+														payload: {
+															command: 'grif sliz'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🦁🦅',
+														payload: {
+															command: 'grif coga'
+														},
+														color: 'secondary'
+													})
+													.textButton({
+														label: '🦅🐍',
+														payload: {
+															command: 'coga sliz'
+														},
+														color: 'secondary'
+													})
+													.oneTime().inline()
+												}
+			)
+			if (!answer8.payload) {
+				context.send(`Жмите только по кнопкам с иконками!`)
+			} else {
+				result += `${answer8.payload.command}`
+				answer_check = true
+			}
+		}
 		const ans = result.split(" ")
+		console.log(ans)
 		const complet:any = {
 			'grif': 0,
 			'puff': 0,
@@ -445,11 +526,12 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			complet[`${ans[i]}`] = complet[`${ans[i]}`]+1
 		}
 		const win = Object.entries(complet).reduce((acc:any, curr:any) => acc[1] > curr[1] ? acc : curr)[0]
+		console.log(win)
 		const data_answer: any = {
 			"coga": `Немного подумав, Шляпа огласила вердикт:
 
 			ТВОЙ ФАКУЛЬТЕТ КОГТЕВРАН🎉🎊💙💙
-			ученик(ца) ${name.text}!
+			ученик(ца) ${datas[0].name}!
 			
 			Подай заявку в гостиную:
 			Пароль: ЗНАНИЕ - СИЛА (пароль отправить в сообщения сообществу гостиной)
@@ -466,7 +548,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			'puff': `Немного подумав, Шляпа огласила вердикт:
 
 			ТВОЙ ФАКУЛЬТЕТ ПУФФЕНДУЙ🎉🎊💛💛
-			ученик(ца) ${name.text}!
+			ученик(ца) ${datas[0].name}!
 
 			Подай заявку в гостиную:
 			Пароль: ДОБРОЕ СЕРДЦЕ (пароль отправить в сообщения сообществу гостиной)
@@ -483,7 +565,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			'sliz': `Немного подумав, Шляпа огласила вердикт:
 
 			ТВОЙ ФАКУЛЬТЕТ СЛИЗЕРИН🎉🎊💚💚
-			ученик(ца) ${name.text}!
+			ученик(ца) ${datas[0].name}!
 
 			Подай заявку в гостиную:
 			Пароль: ЧИСТАЯ КРОВЬ (пароль отправить в сообщения сообществу гостиной)
@@ -500,7 +582,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			'griff': `Немного подумав, Шляпа огласила вердикт:
 
 			ТВОЙ ФАКУЛЬТЕТ ГРИФФИНДОР ❤❤🎉🎊
-			ученик(ца) ${name.text}!
+			ученик(ца) ${datas[0].name}!
 
 			Подай заявку в гостиную: https://vk.com/griffindor_hogonline
 			Пароль: КАПУТ ДРАКОНИС (пароль отправить в сообщения сообществу гостиной)
@@ -518,7 +600,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		const save = await prisma.user.create({
 			data: {
 				idvk: context.senderId,
-				name: name.text,
+				name: datas[0].name,
 				coga: complet.coga,
 				puff: complet.puff,
 				grif: complet.grif,
