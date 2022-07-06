@@ -26,7 +26,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             console.log(`Deleted ${get_user.name}`)
         }
     })
-    hearManager.hear(/отчёт/, async (context) => {
+    hearManager.hear(/енотик/, async (context) => {
         let WorkBook = xlsx.utils.book_new()
         const facult:any = ['coga', 'grif', 'sliz', 'puff']
         for (let i=0; i < facult.length; i++) {
