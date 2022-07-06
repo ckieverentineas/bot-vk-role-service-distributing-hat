@@ -30,7 +30,6 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         let WorkBook = xlsx.utils.book_new()
         const facult:any = ['coga', 'grif', 'sliz', 'puff']
         for (let i=0; i < facult.length; i++) {
-            console.log(`смотри это 1 ${i}`)
             const data = await prisma.user.findMany({
                 where: {
                     facult: facult[i]
@@ -41,7 +40,6 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             let jsonArr = [];
             let counter = 1
             for (let j = 0; j < data.length; j++) {
-                console.log(`смотри это 2 ${j}`)
                 jsonArr.push({
                     id: counter++,
                     name: data[j].name,
@@ -57,7 +55,6 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             let complet = []
             counter = 1
             for (let x = 0; x < jsonArr.length; x++) {
-                console.log(`смотри это 3 ${x}`)
                 complet.push({
                     id: counter++,
                     name: jsonArr[i].name,
@@ -82,11 +79,11 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             xlsx.utils.sheet_add_aoa(WorkSheet, [["№ п/п", "ФИО ученика", "Когтевран", "Пуффендуй", "Гриффиндор", "Слизерин", "Профиль", "Дата регистрации"]], { origin: "A1" });
         }
         /* create an XLSX file and try to save to Presidents.xlsx */
-        console.log(`Создание таблицы... ./public/tables/full.xlsx`)
-        await xlsx.writeFile(WorkBook, `full.xlsx`);
+        console.log(`Создание таблицы... hog-stud-report.xlsx`)
+        await xlsx.writeFile(WorkBook, `hog-stud-report.xlsx`);
         let answer_check = false
 		while (answer_check == false) {
-			const answer1 = await context.question(`Отчет сгенерирован, хотите скачать?
+			const answer1 = await context.question(`Вы видите Енотика, который что-то вычислияет. Подойти к нему?
 											`,
 											{
 												keyboard: Keyboard.builder()
@@ -113,13 +110,15 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
 				if (answer1.payload.command == 'yes') {
 
                     context.sendDocuments({
-                            value: `full.xlsx`,
-                            filename: `full.xlsx`
+                            value: `hog-stud-report.xlsx`,
+                            filename: `hog-stud-report.xlsx`
                         },
                         {
-                            message: 'тест'
+                            message: 'Енотик считает, сколько учеников прибыло в Хогвартс, и протягивает вам отчёт о проделанной работе.'
                         }
                     );
+                } else {
+                    context.send(`Что ж, видимо, не сегодня. Хотя так хотелось его погладить...`)
                 }
                 answer_check = true
 			}
