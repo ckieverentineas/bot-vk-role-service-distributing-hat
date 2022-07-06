@@ -13,8 +13,10 @@ import { send } from 'process';
 
 //авторизация
 const vk = new VK({
-	token: "vk1.a.A4bwKWEBoC3HFdmknXnayrmO4_FR9i7SRB5hNWx0JbA8PDAtZBMQ11HY_aBQfS9l7BGfXvi6z7iGFoitiOKjouy5Ewsdt8oVC1K2zFeOn4ucbwfquLSRJfXQ0jo6Ixhp7vRXG7vchkCIuiP3bh2XjeqRh66ezpvX4ohqgdiOGJhobuy_413JY_GrBrAcJ40o",
-	pollingGroupId: 214352744
+	token: "b603c7efd00e1ce663d70a18c8915686bbdfee594a2f8d66d77620c712df5e9c2ae9e211c4164b80df6f9",
+	pollingGroupId: 207638246
+	//token: "vk1.a.A4bwKWEBoC3HFdmknXnayrmO4_FR9i7SRB5hNWx0JbA8PDAtZBMQ11HY_aBQfS9l7BGfXvi6z7iGFoitiOKjouy5Ewsdt8oVC1K2zFeOn4ucbwfquLSRJfXQ0jo6Ixhp7vRXG7vchkCIuiP3bh2XjeqRh66ezpvX4ohqgdiOGJhobuy_413JY_GrBrAcJ40o",
+	//pollingGroupId: 214352744
 	//token: 'd0d096ed5933ced08bc674c08134e4e47603a0443f4972d6595024ae32f8677b62032ec53ebfddc80ff16'
 });
 
@@ -577,7 +579,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			https://vk.com/camilla_pis
 			
 			Поменять факультет можно только на 2 курсе обучения.`,
-			'griff': `Немного подумав, Шляпа огласила вердикт:
+			'grif': `Немного подумав, Шляпа огласила вердикт:
 
 			ТВОЙ ФАКУЛЬТЕТ ГРИФФИНДОР ❤❤🎉🎊
 			ученик(ца) ${datas[0].name}!
