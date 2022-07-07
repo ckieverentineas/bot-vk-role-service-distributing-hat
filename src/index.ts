@@ -75,7 +75,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		);
 		
 		if (!/да|yes|Согласиться|конечно/i.test(answer.text|| '{}')) {
-			await context.send('Тогда, мы не можем совершить регистрацию');
+			await context.send('Тогда мы не можем совершить регистрацию');
 			return;
 		}
 
@@ -89,7 +89,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		let name_check = false
 		let datas: any = []
 		while (name_check == false) {
-			const name = await context.question(`Введите имя персонажа (канонных персов брать нельзя, по типу как Гарри Поттер и т.д.):
+			const name = await context.question(`Введите имя персонажа (канонных персов брать нельзя, по типу Гарри Поттер и т.д.):
 			❗Максимум 30 символов`)
 			if (name.text.length <= 30) {
 				name_check = true
@@ -611,6 +611,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		console.log(`Success save user idvk: ${context.senderId}`)
 		console.log(save)
 	}
+	prisma.$disconnect()
 	return next();
 })
 

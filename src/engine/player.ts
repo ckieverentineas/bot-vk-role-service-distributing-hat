@@ -25,6 +25,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             context.send(`Вас удалили ${get_user.name}. Возвращайтесь к нам снова!`)
             console.log(`Deleted ${get_user.name}`)
         }
+        prisma.$disconnect()
     })
     hearManager.hear(/енотик/, async (context) => {
         let WorkBook = xlsx.utils.book_new()
@@ -42,28 +43,27 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             for (let j = 0; j < data.length; j++) {
                 jsonArr.push({
                     id: counter++,
-                    name: data[j].name,
-                    coga: data[j].coga,
-                    puff: data[j].puff,
-                    grif: data[j].grif,
-                    sliz: data[j].sliz,
-                    share: `https://vk.com/id${data[j].idvk}`,
-                    crdate: data[j].crdate,
+                    name: data[j]?.name,
+                    coga: data[j]?.coga,
+                    puff: data[j]?.puff,
+                    grif: data[j]?.grif,
+                    sliz: data[j]?.sliz,
+                    share: `https://vk.com/id${data[j]?.idvk}`,
+                    crdate: data[j]?.crdate,
                 });
-            }//return a.сумма.slice(0, -1) - b.сумма.slice(0, -1);
-            jsonArr.sort(function(a:any, b:any) {return b[facult[i]].slice(0, -1) - a[facult[i]].slice(0, -1)})
+            }
             let complet = []
             counter = 1
             for (let x = 0; x < jsonArr.length; x++) {
                 complet.push({
                     id: counter++,
-                    name: jsonArr[i].name,
-                    coga: jsonArr[i].coga,
-                    puff: jsonArr[i].puff,
-                    grif: jsonArr[i].grif,
-                    sliz: jsonArr[i].sliz,
-                    share: jsonArr[i].share,
-                    crdate: jsonArr[i].crdate,
+                    name: jsonArr[x]?.name,
+                    coga: jsonArr[x]?.coga,
+                    puff: jsonArr[x]?.puff,
+                    grif: jsonArr[x]?.grif,
+                    sliz: jsonArr[x]?.sliz,
+                    share: jsonArr[x]?.share,
+                    crdate: jsonArr[x]?.crdate,
                 });
             }
             const WorkSheet = xlsx.utils.json_to_sheet(complet|| null)
@@ -123,6 +123,6 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 answer_check = true
 			}
 		}
-
+        prisma.$disconnect()
     })
 }
