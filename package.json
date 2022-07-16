@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "cap",
   "engines": {
-    "node": "15.8.0"
+    "node": "16.x"
   },
   "main": "index.js",
   "scripts": {
