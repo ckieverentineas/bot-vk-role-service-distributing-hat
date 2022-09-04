@@ -92,8 +92,33 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			const name = await context.question(`Введите имя персонажа (канонных персов брать нельзя, по типу Гарри Поттер и т.д.):
 			❗Максимум 30 символов`)
 			if (name.text.length <= 30) {
-				name_check = true
-				datas.push({name: `${name.text}`})
+				const  blacklist = [
+					"Блэк", "Блек",
+					"Харрис", "Уизли", "Браун", "Дамблдор", "Лестрейндж", "Поттер",
+					"Грин-де-Вальд", "Грейнджер", "Малфой", "Лавгуд", "Люпин",
+					"Снейп", "Снегг",
+					"Мракс",
+					"Реддл", "Реддль",
+					"Керроу", "Кэрроу",
+					"Эванс", "Гриндевальд"
+				]
+				const temp = name.text.split(' ')
+				let warner = false
+				for (let i = 0; i < temp.length; i++) {
+					for (let j = 0; j < blacklist.length; j++) {
+						if (temp[i].toLowerCase() == blacklist[j].toLowerCase()) {
+							warner = true
+							context.send(`Внимание! Следующие инициалы являются запрещенными: ${blacklist[j]}`)
+						}
+					}
+				}
+				if (warner == false) {
+					name_check = true
+					datas.push({name: `${name.text}`})
+				} else {
+					context.send(`Введите имя персонажа должным образом!`)
+				}
+				
 			} else {
 				context.send(`Нужно было вести ФИО персонажа до 30 символов включительно!`)
 			}
@@ -518,10 +543,10 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		}
 		const ans = result.split(" ")
 		const complet:any = {
+			'sliz': 0,
 			'grif': 0,
-			'puff': 0,
 			'coga': 0,
-			'sliz': 0
+			'puff': 0
 		}
 		for (let i=0; i < ans.length; i++) {
 			complet[`${ans[i]}`] = complet[`${ans[i]}`]+1
