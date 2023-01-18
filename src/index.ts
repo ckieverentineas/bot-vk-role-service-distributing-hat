@@ -12,6 +12,7 @@ import { InitGameRoutes } from './engine/init';
 import { send } from 'process';
 import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 import { env } from 'process';
+import got = require('got');
 dotenv.config()
 //авторизация
 export const token: string = String(process.env.token)
@@ -46,6 +47,23 @@ registerUserRoutes(hearManager)
 
 //миддлевар для предварительной обработки сообщений
 vk.updates.on('message_new', async (context: any, next: any) => {
+	try {
+		const data = (await got.get(`https://vk.com/foaf.php?id=${context.senderId}`)).body;
+		const arr: any = data.toString().split('<')
+		for (const i in arr) {
+			if (arr[i].includes(`ya:created dc:date=`)) {
+				const date_read = arr[i].match(/"([^']+)"/)[1];
+				const date: any = new Date(date_read)
+				const date_now = Date.now()
+				if (date_now-date < 2592000000) {
+					context.send(`⁉ Вашей странице меньше месяца. вы не можете пройти распределение`)
+					return
+				}
+			}
+		}
+	} catch (error: any) {
+		console.error(error.response.statusCode);
+	}
 	//проверяем есть ли пользователь в базах данных
 	const user_check = await prisma.user.findFirst({
 		where: {
