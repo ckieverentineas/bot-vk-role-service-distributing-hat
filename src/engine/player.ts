@@ -10,7 +10,7 @@ import * as fs from 'fs';
 const prisma = new PrismaClient()
 
 export function registerUserRoutes(hearManager: HearManager<IQuestionMessageContext>): void {
-	hearManager.hear(/0/, async (context) => {
+	hearManager.hear(/1000-7/, async (context) => {
         const get_user:any = await prisma.user.findFirst({
             where: {
                 idvk: context.senderId

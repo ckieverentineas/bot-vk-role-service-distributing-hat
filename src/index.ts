@@ -91,10 +91,11 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 						command: 'Отказаться'
 					},
 					color: 'negative'
-				}).oneTime()
+				}).oneTime(),
+                answerTimeLimit 
 			}
 		);
-		
+		if (answer.isTimeout) { return await context.send('⏰ Время ожидания на подтверждение согласия истекло!')}
 		if (!/да|yes|Согласиться|конечно/i.test(answer.text|| '{}')) {
 			await context.send('Тогда ещё раз подумайте и напишите снова');
 			return;
@@ -110,8 +111,8 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		let name_check = false
 		let datas: any = []
 		while (name_check == false) {
-			const name = await context.question(`Введите имя персонажа (канонных персов брать нельзя, по типу Гарри Поттер и т.д.):
-			❗Максимум 30 символов`)
+			const name = await context.question(`Введите имя персонажа (канонных персов брать нельзя, по типу Гарри Поттер и т.д.): \n ❗Максимум 30 символов`, timer_text)
+			if (name.isTimeout) { return await context.send('⏰ Время ожидания на ввод имени истекло!') }
 			if (name.text.length <= 30) {
 				const  blacklist = [
 					"Блэк", "Блек",
@@ -186,9 +187,11 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 														command: 'puff'
 													},
 													color: 'secondary'
-												}).oneTime().inline()
+												}).oneTime().inline(),
+												answerTimeLimit
 											}
 			)
+			if (answer1.isTimeout) { return await context.send('⏰ Время ожидания на ответ 1-го вопроса истекло!') }
 			if (!answer1.payload) {
 				context.send(`Жмите только по кнопкам с иконками!`)
 			} else {
@@ -236,9 +239,11 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 															command: 'puff'
 														},
 														color: 'secondary'
-													}).oneTime().inline()
+													}).oneTime().inline(),
+													answerTimeLimit
 												}
 			)
+			if (answer2.isTimeout) { return await context.send('⏰ Время ожидания на ответ 2-го вопроса истекло!') }
 			if (!answer2.payload) {
 				context.send(`Жмите только по кнопкам с иконками!`)
 			} else {
@@ -286,9 +291,11 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 															command: 'puff'
 														},
 														color: 'secondary'
-													}).oneTime().inline()
+													}).oneTime().inline(),
+													answerTimeLimit
 												}
 			)
+			if (answer3.isTimeout) { return await context.send('⏰ Время ожидания на ответ 3-го вопроса истекло!') }
 			if (!answer3.payload) {
 				context.send(`Жмите только по кнопкам с иконками!`)
 			} else {
@@ -336,9 +343,11 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 															command: 'puff'
 														},
 														color: 'secondary'
-													}).oneTime().inline()
+													}).oneTime().inline(),
+													answerTimeLimit
 												}
 			)
+			if (answer4.isTimeout) { return await context.send('⏰ Время ожидания на ответ 4-го вопроса истекло!') }
 			if (!answer4.payload) {
 				context.send(`Жмите только по кнопкам с иконками!`)
 			} else {
@@ -386,9 +395,11 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 															command: 'coga'
 														},
 														color: 'secondary'
-													}).oneTime().inline()
+													}).oneTime().inline(),
+													answerTimeLimit
 												}
 			)
+			if (answer5.isTimeout) { return await context.send('⏰ Время ожидания на ответ 5-го вопроса истекло!') }
 			if (!answer5.payload) {
 				context.send(`Жмите только по кнопкам с иконками!`)
 			} else {
@@ -436,9 +447,11 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 															command: 'coga'
 														},
 														color: 'secondary'
-													}).oneTime().inline()
+													}).oneTime().inline(),
+													answerTimeLimit
 												}
 			)
+			if (answer6.isTimeout) { return await context.send('⏰ Время ожидания на ответ 6-го вопроса истекло!') }
 			if (!answer6.payload) {
 				context.send(`Жмите только по кнопкам с иконками!`)
 			} else {
@@ -486,9 +499,11 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 															command: 'puff'
 														},
 														color: 'secondary'
-													}).oneTime().inline()
+													}).oneTime().inline(),
+													answerTimeLimit
 												}
 			)
+			if (answer7.isTimeout) { return await context.send('⏰ Время ожидания на ответ 7-го вопроса истекло!') }
 			if (!answer7.payload) {
 				context.send(`Жмите только по кнопкам с иконками!`)
 			} else {
@@ -552,9 +567,11 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 														},
 														color: 'secondary'
 													})
-													.oneTime().inline()
+													.oneTime().inline(),
+													answerTimeLimit
 												}
 			)
+			if (answer8.isTimeout) { return await context.send('⏰ Время ожидания на ответ финального вопроса истекло!') }
 			if (!answer8.payload) {
 				context.send(`Жмите только по кнопкам с иконками!`)
 			} else {
