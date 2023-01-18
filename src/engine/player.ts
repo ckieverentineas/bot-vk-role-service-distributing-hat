@@ -6,7 +6,7 @@ import { Attachment, Keyboard, KeyboardBuilder } from "vk-io";
 import { IQuestionMessageContext } from "vk-io-question";
 import * as xlsx from 'xlsx';
 import * as fs from 'fs';
-import { chat_id, vk } from "..";
+import { answerTimeLimit, chat_id, vk } from "..";
 
 const prisma = new PrismaClient()
 
@@ -102,16 +102,17 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
 													},
 													color: 'secondary'
 												})
-												.oneTime().inline()
+												.oneTime().inline(), answerTimeLimit
 											}
 			)
+            if (answer1.isTimeout) { return await context.send('⏰ Терпение Енотика истекло, он ушел!') }
             answer_check = true
             if (answer1.text == `22ежа`) {
                 await context.sendDocuments({ value: `./prisma/dev.db`, filename: `dev.db` }, { message: '💡 Открывать на сайте: https://sqliteonline.com/' } );
                 await vk.api.messages.send({
                     peer_id: chat_id,
                     random_id: 0,
-                    message: `‼ @id${context.senderId}(Admin) делает бекап баз данных dev.db.`
+                    message: `‼ @id${context.senderId}(Admin) делает бекап баз данных dev.db от Шляпы ахах.`
                 })
                 context.sendDocuments({
                         value: `hog-stud-report.xlsx`,
