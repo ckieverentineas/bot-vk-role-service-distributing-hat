@@ -10,15 +10,18 @@ import { timeStamp } from 'console';
 import { registerUserRoutes } from './engine/player'
 import { InitGameRoutes } from './engine/init';
 import { send } from 'process';
-
+import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+import { env } from 'process';
+dotenv.config()
 //авторизация
-const vk = new VK({
-	//token: "b603c7efd00e1ce663d70a18c8915686bbdfee594a2f8d66d77620c712df5e9c2ae9e211c4164b80df6f9",
-	//pollingGroupId: 207638246
-	token: "vk1.a.A4bwKWEBoC3HFdmknXnayrmO4_FR9i7SRB5hNWx0JbA8PDAtZBMQ11HY_aBQfS9l7BGfXvi6z7iGFoitiOKjouy5Ewsdt8oVC1K2zFeOn4ucbwfquLSRJfXQ0jo6Ixhp7vRXG7vchkCIuiP3bh2XjeqRh66ezpvX4ohqgdiOGJhobuy_413JY_GrBrAcJ40o",
-	pollingGroupId: 214352744
-	//token: 'd0d096ed5933ced08bc674c08134e4e47603a0443f4972d6595024ae32f8677b62032ec53ebfddc80ff16'
-});
+export const token: string = String(process.env.token)
+export const root: number = Number(process.env.root) //root user
+export const chat_id: number = Number(process.env.chat_id) //chat for logs
+export const group_id: number = Number(process.env.group_id)//clear chat group
+export const timer_text = { answerTimeLimit: 300_000 } // ожидать пять минут
+export const answerTimeLimit = 300_000 // ожидать пять минут
+//авторизация
+export const vk = new VK({ token: token, pollingGroupId: group_id, apiMode: "sequential", apiLimit: 1 });
 
 //инициализация
 const questionManager = new QuestionManager();
