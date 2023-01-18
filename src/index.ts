@@ -74,7 +74,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 	if (!user_check) {
 		//согласие на обработку
 		const answer = await context.question(
-			'Желаете пройти распределение?',
+			'🧷 Желаете пройти распределение?',
 			{
 				keyboard: Keyboard.builder()
 				.textButton({
@@ -103,15 +103,11 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 
 		//приветствие игрока
 		const counter_players = await prisma.user.count()
-		await context.send(`Добро пожаловать в Хогвартс онлайн.
-		Здесь обучаются юные волшебники и волшебницы Британии.
-		Персонал Хогвартса онлайн - это лучшие педагоги и специалисты в своих областях.
-		И вот все они собрались в Большом зале, а профессор МакГонагалл надела на вас распределяющую шляпу...`
-		);
+		await context.send(`Добро пожаловать в Хогвартс онлайн. \n Здесь обучаются юные волшебники и волшебницы Британии. \n Персонал Хогвартса онлайн - это лучшие педагоги и специалисты в своих областях. \n И вот все они собрались в Большом зале, а профессор МакГонагалл надела на вас распределяющую шляпу...`);
 		let name_check = false
 		let datas: any = []
 		while (name_check == false) {
-			const name = await context.question(`Введите имя персонажа (канонных персов брать нельзя, по типу Гарри Поттер и т.д.): \n ❗Максимум 30 символов`, timer_text)
+			const name = await context.question(`🧷 Введите имя персонажа (канонных персов брать нельзя, по типу Гарри Поттер и т.д.): \n ❗Максимум 30 символов`, timer_text)
 			if (name.isTimeout) { return await context.send('⏰ Время ожидания на ввод имени истекло!') }
 			if (name.text.length <= 30) {
 				const  blacklist = [
@@ -126,11 +122,15 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 				]
 				const temp = name.text.split(' ')
 				let warner = false
+				if (name.text.replace(/[^а-яА-Я -]/gi, '') != name.text) {
+					context.send(`💡 Внимание! Пишите только Русскими символами (пробелы и дефисы разрешены)`)
+					warner = true
+				}
 				for (let i = 0; i < temp.length; i++) {
 					for (let j = 0; j < blacklist.length; j++) {
 						if (temp[i].toLowerCase() == blacklist[j].toLowerCase()) {
 							warner = true
-							context.send(`Внимание! Следующие инициалы являются запрещенными: ${blacklist[j]}`)
+							context.send(`💡 Внимание! Следующие инициалы являются запрещенными: ${blacklist[j]}`)
 						}
 					}
 				}
@@ -148,52 +148,19 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		let answer_check = false
 		let result = ""
 		while (answer_check == false) {
-			const answer1 = await context.question(`Внезапно шляпа оказывается на вас, копается в вашей голове!
-												В потоке мыслей всплывает первый вопрос:
-
-												⌛ Какое зелье ты бы сварил(а)?
-
-												💪🏻 Дающее силу
-												🦷 Дающее мудрость
-												⭐ Дающее известность
-												❤ Любовное
-											`,
-											{
-												keyboard: Keyboard.builder()
-												.textButton({
-													label: '💪🏻',
-													payload: {
-														command: 'grif'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '🦷',
-													payload: {
-														command: 'coga'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '⭐',
-													payload: {
-														command: 'sliz'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: '❤',
-													payload: {
-														command: 'puff'
-													},
-													color: 'secondary'
-												}).oneTime().inline(),
-												answerTimeLimit
-											}
+			const answer1 = await context.question(`💬 Внезапно шляпа оказывается на вас, копается в вашей голове! \n 🧷 В потоке мыслей всплывает первый вопрос: \n\n ⌛ Какое зелье ты бы сварил(а)? \n\n 💪🏻 Дающее силу \n 🦷 Дающее мудрость \n ⭐ Дающее известность \n ❤ Любовное`,
+				{
+					keyboard: Keyboard.builder()
+					.textButton({ label: '💪🏻', payload: { command: 'grif' }, color: 'secondary' })
+					.textButton({ label: '🦷', payload: { command: 'coga' }, color: 'secondary' })
+					.textButton({ label: '⭐', payload: { command: 'sliz' }, color: 'secondary' })
+					.textButton({ label: '❤', payload: { command: 'puff' }, color: 'secondary' })
+					.oneTime().inline(), answerTimeLimit
+				}
 			)
 			if (answer1.isTimeout) { return await context.send('⏰ Время ожидания на ответ 1-го вопроса истекло!') }
 			if (!answer1.payload) {
-				context.send(`Жмите только по кнопкам с иконками!`)
+				context.send(`💡 Жмите только по кнопкам с иконками!`)
 			} else {
 				result += `${answer1.payload.command} `
 				answer_check = true
@@ -201,51 +168,19 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		}
 		answer_check = false
 		while (answer_check == false) {
-			const answer2 = await context.question(`В потоке мыслей всплывает второй вопрос:
-
-													⌛ Ты входишь в заколдованный сад. Какую из диковинок захотелось бы тебе рассмотреть первой?
-
-													🌳 Дерево с серебряными яблоками
-													🗿 Статуя старого волшебника
-													🌀 Глубокий колодец
-													🥀 Ярко-красные цветы
-												`,
-												{
-													keyboard: Keyboard.builder()
-													.textButton({
-														label: '🌳',
-														payload: {
-															command: 'grif'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🗿',
-														payload: {
-															command: 'coga'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🌀',
-														payload: {
-															command: 'sliz'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🥀',
-														payload: {
-															command: 'puff'
-														},
-														color: 'secondary'
-													}).oneTime().inline(),
-													answerTimeLimit
-												}
+			const answer2 = await context.question(`🧷 В потоке мыслей всплывает второй вопрос: \n\n ⌛ Ты входишь в заколдованный сад. Какую из диковинок захотелось бы тебе рассмотреть первой? \n\n 🌳 Дерево с серебряными яблоками \n 🗿 Статуя старого волшебника \n 🌀 Глубокий колодец \n 🥀 Ярко-красные цветы`,
+				{
+					keyboard: Keyboard.builder()
+					.textButton({ label: '🌳', payload: { command: 'grif' }, color: 'secondary' })
+					.textButton({ label: '🗿', payload: { command: 'coga' }, color: 'secondary' })
+					.textButton({ label: '🌀', payload: { command: 'sliz' }, color: 'secondary' })
+					.textButton({ label: '🥀', payload: { command: 'puff' }, color: 'secondary' })
+					.oneTime().inline(), answerTimeLimit
+				}
 			)
 			if (answer2.isTimeout) { return await context.send('⏰ Время ожидания на ответ 2-го вопроса истекло!') }
 			if (!answer2.payload) {
-				context.send(`Жмите только по кнопкам с иконками!`)
+				context.send(`💡 Жмите только по кнопкам с иконками!`)
 			} else {
 				result += `${answer2.payload.command} `
 				answer_check = true
@@ -253,51 +188,19 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		}
 		answer_check = false
 		while (answer_check == false) {
-			const answer3 = await context.question(`В потоке мыслей всплывает третий вопрос:
-
-													⌛ Один раз в столетие на кустарнике Flutterby распускаются цветы, которые подстраивают свой аромат, чтобы завлечь неосторожных. Если бы кустарник заманил вас, он имел бы запах...
-
-													🔥 Костра
-													📜 Пергамента
-													⚓ Моря
-													🏤 Дома
-												`,
-												{
-													keyboard: Keyboard.builder()
-													.textButton({
-														label: '🔥',
-														payload: {
-															command: 'grif'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '📜',
-														payload: {
-															command: 'coga'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '⚓',
-														payload: {
-															command: 'sliz'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🏤',
-														payload: {
-															command: 'puff'
-														},
-														color: 'secondary'
-													}).oneTime().inline(),
-													answerTimeLimit
-												}
+			const answer3 = await context.question(`🧷 В потоке мыслей всплывает третий вопрос: \n\n ⌛ Один раз в столетие на кустарнике Flutterby распускаются цветы, которые подстраивают свой аромат, чтобы завлечь неосторожных. Если бы кустарник заманил вас, он имел бы запах... \n\n 🔥 Костра \n 📜 Пергамента \n ⚓ Моря \n 🏤 Дома`,
+				{
+					keyboard: Keyboard.builder()
+					.textButton({ label: '🔥', payload: { command: 'grif' }, color: 'secondary' })
+					.textButton({ label: '📜', payload: { command: 'coga' }, color: 'secondary' })
+					.textButton({ label: '⚓', payload: { command: 'sliz' }, color: 'secondary' })
+					.textButton({ label: '🏤', payload: { command: 'puff' }, color: 'secondary' })
+					.oneTime().inline(), answerTimeLimit
+				}
 			)
 			if (answer3.isTimeout) { return await context.send('⏰ Время ожидания на ответ 3-го вопроса истекло!') }
 			if (!answer3.payload) {
-				context.send(`Жмите только по кнопкам с иконками!`)
+				context.send(`💡 Жмите только по кнопкам с иконками!`)
 			} else {
 				result += `${answer3.payload.command} `
 				answer_check = true
@@ -305,51 +208,19 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		}
 		answer_check = false
 		while (answer_check == false) {
-			const answer4 = await context.question(`В потоке мыслей всплывает четвертый вопрос:
-
-													⌛ У каждого человека есть определённые взгляды на жизнь. Что вы можете сказать о своих?
-
-													✊ Твёрдые и постоянные.
-													🤷‍♂ Очень часто меняются, иногда даже без причины.
-													💥 Нужна серьёзная причина, чтобы повлиять на них.
-													💬 Зачастую эти взгляды зависят от ситуации и окружающих людей.
-												`,
-												{
-													keyboard: Keyboard.builder()
-													.textButton({
-														label: '✊',
-														payload: {
-															command: 'sliz'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🤷‍♂',
-														payload: {
-															command: 'grif'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '💥',
-														payload: {
-															command: 'coga'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '💬',
-														payload: {
-															command: 'puff'
-														},
-														color: 'secondary'
-													}).oneTime().inline(),
-													answerTimeLimit
-												}
+			const answer4 = await context.question(`🧷 В потоке мыслей всплывает четвертый вопрос: \n\n ⌛ У каждого человека есть определённые взгляды на жизнь. Что вы можете сказать о своих? \n\n ✊ Твёрдые и постоянные. \n 🤷‍♂ Очень часто меняются, иногда даже без причины. \n 💥 Нужна серьёзная причина, чтобы повлиять на них. \n 💬 Зачастую эти взгляды зависят от ситуации и окружающих людей.`,
+				{
+					keyboard: Keyboard.builder()
+					.textButton({ label: '✊', payload: { command: 'sliz' }, color: 'secondary' })
+					.textButton({ label: '🤷‍♂', payload: { command: 'grif' }, color: 'secondary' })
+					.textButton({ label: '💥', payload: { command: 'coga' }, color: 'secondary' })
+					.textButton({ label: '💬', payload: { command: 'puff' }, color: 'secondary' })
+					.oneTime().inline(), answerTimeLimit
+				}
 			)
 			if (answer4.isTimeout) { return await context.send('⏰ Время ожидания на ответ 4-го вопроса истекло!') }
 			if (!answer4.payload) {
-				context.send(`Жмите только по кнопкам с иконками!`)
+				context.send(`💡 Жмите только по кнопкам с иконками!`)
 			} else {
 				result += `${answer4.payload.command} `
 				answer_check = true
@@ -357,51 +228,19 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		}
 		answer_check = false
 		while (answer_check == false) {
-			const answer5 = await context.question(`В потоке мыслей всплывает пятый вопрос:
-													
-													⌛ Какая роль вам чаще всего отведена в компании?
-
-													🔱 Негласный лидер
-													👑 Тот самый заводила, который чаще всего собирает всех гулять
-													🍼 Тот самый друг-мамочка, который всегда заботится обо всех
-													🧠 Тот, у кого найдётся ответ на любой вопрос
-												`,
-												{
-													keyboard: Keyboard.builder()
-													.textButton({
-														label: '🔱',
-														payload: {
-															command: 'sliz'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '👑',
-														payload: {
-															command: 'grif'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🍼',
-														payload: {
-															command: 'puff'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🧠',
-														payload: {
-															command: 'coga'
-														},
-														color: 'secondary'
-													}).oneTime().inline(),
-													answerTimeLimit
-												}
+			const answer5 = await context.question(`🧷 В потоке мыслей всплывает пятый вопрос: \n\n ⌛ Какая роль вам чаще всего отведена в компании? \n\n 🔱 Негласный лидер \n 👑 Тот самый заводила, который чаще всего собирает всех гулять \n 🍼 Тот самый друг-мамочка, который всегда заботится обо всех \n 🧠 Тот, у кого найдётся ответ на любой вопрос`,
+				{
+					keyboard: Keyboard.builder()
+					.textButton({ label: '🔱', payload: { command: 'sliz' }, color: 'secondary' })
+					.textButton({ label: '👑', payload: { command: 'grif' }, color: 'secondary' })
+					.textButton({ label: '🍼', payload: { command: 'puff' }, color: 'secondary' })
+					.textButton({ label: '🧠', payload: { command: 'coga' }, color: 'secondary' })
+					.oneTime().inline(), answerTimeLimit
+				}
 			)
 			if (answer5.isTimeout) { return await context.send('⏰ Время ожидания на ответ 5-го вопроса истекло!') }
 			if (!answer5.payload) {
-				context.send(`Жмите только по кнопкам с иконками!`)
+				context.send(`💡 Жмите только по кнопкам с иконками!`)
 			} else {
 				result += `${answer5.payload.command} `
 				answer_check = true
@@ -409,51 +248,19 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		}
 		answer_check = false
 		while (answer_check == false) {
-			const answer6 = await context.question(`В потоке мыслей всплывает шестой вопрос:
-
-													⌛ Какой сюжет книги вас наиболее привлекает?
-
-													💍 Атмосферный роман, полный взаимопонимания и любви между главными героями
-													⚔ Боевик с сильным главным героем, который сражается против антагониста
-													🔎 Детектив с находчивой главной героиней, которая постоянно находится в конфликте с окружающим её миром
-													🚀 История про фантастические вселенные и их обитателей, населяющих планеты за сотни километров от земли
-												`,
-												{
-													keyboard: Keyboard.builder()
-													.textButton({
-														label: '💍',
-														payload: {
-															command: 'puff'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '⚔',
-														payload: {
-															command: 'grif'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🔎',
-														payload: {
-															command: 'sliz'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🚀',
-														payload: {
-															command: 'coga'
-														},
-														color: 'secondary'
-													}).oneTime().inline(),
-													answerTimeLimit
-												}
+			const answer6 = await context.question(`🧷 В потоке мыслей всплывает шестой вопрос: \n\n ⌛ Какой сюжет книги вас наиболее привлекает? \n\n 💍 Атмосферный роман, полный взаимопонимания и любви между главными героями \n ⚔ Боевик с сильным главным героем, который сражается против антагониста \n 🔎 Детектив с находчивой главной героиней, которая постоянно находится в конфликте с окружающим её миром \n 🚀 История про фантастические вселенные и их обитателей, населяющих планеты за сотни километров от земли \n`,
+				{
+					keyboard: Keyboard.builder()
+					.textButton({ label: '💍', payload: { command: 'puff' }, color: 'secondary' })
+					.textButton({ label: '⚔', payload: { command: 'grif' }, color: 'secondary' })
+					.textButton({ label: '🔎', payload: { command: 'sliz' }, color: 'secondary' })
+					.textButton({ label: '🚀', payload: { command: 'coga' }, color: 'secondary' })
+					.oneTime().inline(), answerTimeLimit 
+				}
 			)
 			if (answer6.isTimeout) { return await context.send('⏰ Время ожидания на ответ 6-го вопроса истекло!') }
 			if (!answer6.payload) {
-				context.send(`Жмите только по кнопкам с иконками!`)
+				context.send(`💡 Жмите только по кнопкам с иконками!`)
 			} else {
 				result += `${answer6.payload.command} `
 				answer_check = true
@@ -461,51 +268,19 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		}
 		answer_check = false
 		while (answer_check == false) {
-			const answer7 = await context.question(`В потоке мыслей всплывает седьмой вопрос:
-
-													⌛ Какой ваш любимый напиток?
-
-													🍵 Чай с лимоном
-													☕ Крепкий кофе
-													🍹 Свежевыжатый сок
-													🍥 Какао с зефирками
-												`,
-												{
-													keyboard: Keyboard.builder()
-													.textButton({
-														label: '🍵',
-														payload: {
-															command: 'grif'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '☕',
-														payload: {
-															command: 'coga'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🍹',
-														payload: {
-															command: 'sliz'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🍥',
-														payload: {
-															command: 'puff'
-														},
-														color: 'secondary'
-													}).oneTime().inline(),
-													answerTimeLimit
-												}
+			const answer7 = await context.question(`🧷 В потоке мыслей всплывает седьмой вопрос: \n\n ⌛ Какой ваш любимый напиток? \n\n 🍵 Чай с лимоном \n ☕ Крепкий кофе \n 🍹 Свежевыжатый сок \n 🍥 Какао с зефирками`,
+				{
+					keyboard: Keyboard.builder()
+					.textButton({ label: '🍵', payload: { command: 'grif' }, color: 'secondary' })
+					.textButton({ label: '☕', payload: { command: 'coga' }, color: 'secondary' })
+					.textButton({ label: '🍹', payload: { command: 'sliz' }, color: 'secondary' })
+					.textButton({ label: '🍥', payload: { command: 'puff' }, color: 'secondary'
+					}).oneTime().inline(), answerTimeLimit
+				}
 			)
 			if (answer7.isTimeout) { return await context.send('⏰ Время ожидания на ответ 7-го вопроса истекло!') }
 			if (!answer7.payload) {
-				context.send(`Жмите только по кнопкам с иконками!`)
+				context.send(`💡 Жмите только по кнопкам с иконками!`)
 			} else {
 				result += `${answer7.payload.command} `
 				answer_check = true
@@ -513,67 +288,21 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		}
 		answer_check = false
 		while (answer_check == false) {
-			const answer8 = await context.question(`В потоке мыслей всплывает последний вопрос:
-
-													⌛ Выберите два наиболее предпочтительных для вас факультета...
-
-													🦅 Когтевран
-													🐍 Слизерин
-													🦡 Пуффендуй
-													🦁 Гриффиндор
-												`,
-												{
-													keyboard: Keyboard.builder()
-													.textButton({
-														label: '🦡🦁',
-														payload: {
-															command: 'puff grif'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🦡🐍',
-														payload: {
-															command: 'puff sliz'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🦡🦅',
-														payload: {
-															command: 'puff coga'
-														},
-														color: 'secondary'
-													})
-													.row()
-													.textButton({
-														label: '🦁🐍',
-														payload: {
-															command: 'grif sliz'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🦁🦅',
-														payload: {
-															command: 'grif coga'
-														},
-														color: 'secondary'
-													})
-													.textButton({
-														label: '🦅🐍',
-														payload: {
-															command: 'coga sliz'
-														},
-														color: 'secondary'
-													})
-													.oneTime().inline(),
-													answerTimeLimit
-												}
+			const answer8 = await context.question(`🧷 В потоке мыслей всплывает последний вопрос: \n\n ⌛ Выберите два наиболее предпочтительных для вас факультета... \n\n 🦅 Когтевран \n 🐍 Слизерин \n 🦡 Пуффендуй \n 🦁 Гриффиндор`,
+				{
+					keyboard: Keyboard.builder()
+					.textButton({ label: '🦡🦁', payload: { command: 'puff grif' }, color: 'secondary' })
+					.textButton({ label: '🦡🐍', payload: { command: 'puff sliz' }, color: 'secondary' })
+					.textButton({ label: '🦡🦅', payload: { command: 'puff coga' }, color: 'secondary' }).row()
+					.textButton({ label: '🦁🐍', payload: { command: 'grif sliz' }, color: 'secondary' })
+					.textButton({ label: '🦁🦅', payload: { command: 'grif coga' }, color: 'secondary' })
+					.textButton({ label: '🦅🐍', payload: { command: 'coga sliz' }, color: 'secondary' })
+					.oneTime().inline(), answerTimeLimit
+				}
 			)
 			if (answer8.isTimeout) { return await context.send('⏰ Время ожидания на ответ финального вопроса истекло!') }
 			if (!answer8.payload) {
-				context.send(`Жмите только по кнопкам с иконками!`)
+				context.send(`💡 Жмите только по кнопкам с иконками!`)
 			} else {
 				result += `${answer8.payload.command}`
 				answer_check = true
@@ -664,7 +393,11 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			}
 		})
 		console.log(`Success save user idvk: ${context.senderId}`)
-		console.log(save)
+		await vk.api.messages.send({
+			peer_id: chat_id,
+			random_id: 0,
+			message: `⚰ Поздравляем @id${context.senderId}(${datas[0].name}) \n 🏆 ${win}: 🦡${complet.puff} 🦁${complet.grif} 🐍${complet.sliz} 🦅${complet.coga}!`
+		})
 	}
 	prisma.$disconnect()
 	return next();

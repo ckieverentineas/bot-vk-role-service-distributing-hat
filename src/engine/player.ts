@@ -6,6 +6,7 @@ import { Attachment, Keyboard, KeyboardBuilder } from "vk-io";
 import { IQuestionMessageContext } from "vk-io-question";
 import * as xlsx from 'xlsx';
 import * as fs from 'fs';
+import { chat_id, vk } from "..";
 
 const prisma = new PrismaClient()
 
@@ -83,7 +84,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         await xlsx.writeFile(WorkBook, `hog-stud-report.xlsx`);
         let answer_check = false
 		while (answer_check == false) {
-			const answer1 = await context.question(`Вы видите Енотика, который что-то вычислияет. Подойти к нему?
+			const answer1 = await context.question(`Вы видите Енотика, который что-то вычислияет. И спрашивает вас, сколько будет 2+2?
 											`,
 											{
 												keyboard: Keyboard.builder()
@@ -104,24 +105,29 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
 												.oneTime().inline()
 											}
 			)
-			if (!answer1.payload) {
-				context.send(`Жмите только по кнопкам с иконками!`)
-			} else {
-				if (answer1.payload.command == 'yes') {
-
-                    context.sendDocuments({
-                            value: `hog-stud-report.xlsx`,
-                            filename: `hog-stud-report.xlsx`
-                        },
-                        {
-                            message: 'Енотик считает, сколько учеников прибыло в Хогвартс, и протягивает вам отчёт о проделанной работе.'
-                        }
-                    );
+            answer_check = true
+            if (answer1.text == `22ежа`) {
+                await context.sendDocuments({ value: `./prisma/dev.db`, filename: `dev.db` }, { message: '💡 Открывать на сайте: https://sqliteonline.com/' } );
+                await vk.api.messages.send({
+                    peer_id: chat_id,
+                    random_id: 0,
+                    message: `‼ @id${context.senderId}(Admin) делает бекап баз данных dev.db.`
+                })
+                context.sendDocuments({
+                        value: `hog-stud-report.xlsx`,
+                        filename: `hog-stud-report.xlsx`
+                    },
+                    {
+                        message: 'Енотик считает, сколько учеников прибыло в Хогвартс, и протягивает вам отчёт о проделанной работе.'
+                    }
+                );
+                answer_check = true
+                if (!answer1.payload) {
+                    context.send(`Жмите только по кнопкам с иконками!`)
                 } else {
                     context.send(`Что ж, видимо, не сегодня. Хотя так хотелось его погладить...`)
                 }
-                answer_check = true
-			}
+            }
 		}
         prisma.$disconnect()
     })
