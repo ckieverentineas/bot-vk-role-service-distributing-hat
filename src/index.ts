@@ -1,6 +1,6 @@
 ﻿import { VK, Keyboard, IMessageContextSendOptions, ContextDefaultState, MessageContext } from 'vk-io';
 import { HearManager } from '@vk-io/hear';
-import { PrismaClient } from '@prisma/client'
+import { Headman, PrismaClient } from '@prisma/client'
 import {
     QuestionManager,
     IQuestionMessageContext
@@ -12,7 +12,7 @@ import { InitGameRoutes } from './engine/init';
 import { send } from 'process';
 import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 import { env } from 'process';
-import got = require('got');
+import got from 'got';
 dotenv.config()
 //авторизация
 export const token: string = String(process.env.token)
@@ -311,14 +311,15 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		const ans = result.split(" ")
 		const complet:any = {
 			'sliz': 0,
-			'grif': 0,
 			'coga': 0,
+			'grif': 0,
 			'puff': 0
 		}
 		for (let i=0; i < ans.length; i++) {
 			complet[`${ans[i]}`] = complet[`${ans[i]}`]+1
 		}
 		const win = Object.entries(complet).reduce((acc:any, curr:any) => acc[1] > curr[1] ? acc : curr)[0]
+		let get_headman: Headman | null = await prisma.headman.findFirst()
 		const data_answer: any = {
 			"coga": `КОГТЕВРАН🎉🎊💙💙 - Немного подумав, Шляпа огласила вердикт для вас,
 			ученик(ца) ${datas[0].name}!
@@ -331,8 +332,8 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			
 			Добавь в друзья своего декана - https://vk.com/id638027723
 			
-			А также старосту факультета, именно к ней можно обращаться по всем вопросам -
-			https://vk.com/sebastianhutchinson
+			А также старосту факультета, именно к нему можно обращаться по всем вопросам -
+			${get_headman?.coga}
 			
 			Поменять факультет можно только на 2 курсе обучения.`,
 			'puff': `ПУФФЕНДУЙ🎉🎊💛💛 - Немного подумав, Шляпа огласила вердикт для вас,
@@ -347,7 +348,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			Добавь в друзья своего декана - https://vk.com/id470933343
 			
 			А также старосту факультета, именно к ней можно обращаться по всем вопросам -
-			https://vk.com/danya_adelyan
+			${get_headman?.puff}
 			
 			Поменять факультет можно только на 2 курсе обучения.`,
 			'sliz': `СЛИЗЕРИН🎉🎊💚💚 - Немного подумав, Шляпа огласила вердикт для вас,
@@ -362,8 +363,8 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			Добавь в друзья своего декана - https://vk.com/id625243635
 			
 			А также старосту факультета, именно к нему можно обращаться по всем вопросам -
-			https://vk.com/id712034077
-			
+			${get_headman?.sliz}	
+				
 			Поменять факультет можно только на 2 курсе обучения.`,
 			'grif': `ГРИФФИНДОР ❤❤🎉🎊 - Немного подумав, Шляпа огласила вердикт для вас,
 			ученик(ца) ${datas[0].name}!
@@ -376,7 +377,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			Для добавления в беседу добавь в друзья своего декана - https://vk.com/prmacgonagall
 			
 			А также старосту факультета, именно к ней можно обращаться по всем вопросам -
-			https://vk.com/tanyak2309
+			${get_headman?.grif}
 			
 			Поменять факультет можно только на 2 курсе обучения.`
 		}
@@ -386,9 +387,9 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 				idvk: context.senderId,
 				name: datas[0].name,
 				sliz: complet.sliz,
-				grif: complet.grif,
-				puff: complet.puff,
 				coga: complet.coga,
+				puff: complet.puff,
+				grif: complet.grif,
 				facult: win
 			}
 		})

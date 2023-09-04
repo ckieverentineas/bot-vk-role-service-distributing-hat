@@ -23,3 +23,11 @@ model User {
   facult String
   crdate DateTime @default(now())
 }
+
+model Headman {
+  id     Int      @id @default(autoincrement())
+  coga   String
+  puff   String
+  grif   String
+  sliz   String
+}
