@@ -310,10 +310,10 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		}
 		const ans = result.split(" ")
 		const complet:any = {
-			'sliz': 0,
-			'coga': 0,
 			'grif': 0,
-			'puff': 0
+			'coga': 0,
+			'puff': 0,
+			'sliz': 0
 		}
 		for (let i=0; i < ans.length; i++) {
 			complet[`${ans[i]}`] = complet[`${ans[i]}`]+1
