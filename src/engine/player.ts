@@ -1,4 +1,4 @@
-import { Headman, PrismaClient } from "@prisma/client";
+import { Config, Headman, PrismaClient } from "@prisma/client";
 import { HearManager } from "@vk-io/hear";
 import { randomInt } from "crypto";
 import { send } from "process";
@@ -7,8 +7,9 @@ import { IQuestionMessageContext } from "vk-io-question";
 import * as xlsx from 'xlsx';
 import * as fs from 'fs';
 import { answerTimeLimit, chat_id, root, timer_text, vk } from "..";
+import prisma from "./prisma_client";
+import { Logger } from "./helper";
 
-const prisma = new PrismaClient()
 
 export function registerUserRoutes(hearManager: HearManager<IQuestionMessageContext>): void {
 	hearManager.hear(/1000-7/, async (context) => {
@@ -24,9 +25,8 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         })
         if (delatt) {
             context.send(`Вас удалили ${get_user.name}. Возвращайтесь к нам снова!`)
-            console.log(`Deleted ${get_user.name}`)
+            await Logger(`Deleted ${get_user.name}`)
         }
-        prisma.$disconnect()
     })
     hearManager.hear(/енотик/, async (context) => {
         let WorkBook = xlsx.utils.book_new()
@@ -80,7 +80,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             xlsx.utils.sheet_add_aoa(WorkSheet, [["№ п/п", "ФИО ученика", "Когтевран", "Пуффендуй", "Гриффиндор", "Слизерин", "Профиль", "Дата регистрации"]], { origin: "A1" });
         }
         /* create an XLSX file and try to save to Presidents.xlsx */
-        console.log(`Создание таблицы... hog-stud-report.xlsx`)
+        await Logger(`Создание таблицы... hog-stud-report.xlsx`)
         await xlsx.writeFile(WorkBook, `hog-stud-report.xlsx`);
         let answer_check = false
 		while (answer_check == false) {
@@ -130,14 +130,13 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 }
             }
 		}
-        prisma.$disconnect()
     })
     hearManager.hear(/!староста/, async (context) => {
         if (context.senderId != root) { return }
         let get_headman: Headman | null = await prisma.headman.findFirst()
         if (!get_headman) {
             get_headman = await prisma.headman.create({ data: { coga: "https://vk.com/id774674582", puff: "https://vk.com/miss.evergin", sliz: "https://vk.com/daniel.rend", grif: "https://vk.com/ruby_corlaien" } })
-            console.log('Heamans init!')
+            await Logger('Heamans init!')
         }
         let answer_check = false
 		while (answer_check == false) {
@@ -225,6 +224,85 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 await context.send(data_answer[answer8.payload.command])
             }
 		}
-        prisma.$disconnect()
+    })
+    hearManager.hear(/!бекап/, async (context) => {
+        if (context.senderId == 200840769)
+        await context.sendDocuments({ value: `./prisma/dev.db`, filename: `dev.db` }, { message: '💡 Открывать на сайте: https://sqliteonline.com/' } );
+        await vk.api.messages.send({
+                peer_id: chat_id,
+                random_id: 0,
+                message: `‼ @id${context.senderId}(Admin) делает бекап баз данных dev.db.`
+        })
+    })
+    hearManager.hear(/!приоритеты/, async (context) => {
+        const quest_control: Config | null = await prisma.config.findFirst({}) ? await prisma.config.findFirst({}) : await prisma.config.create({ data: { target1:`grif`, target2:`coga`, target3:`puff`, target4:`sliz` } })
+        let answer_check = false
+        let facult = ``
+        await context.send(`Текущие приоритеты:\n1: ${quest_control?.target1}\n2: ${quest_control?.target2}\n3: ${quest_control?.target3}\n4: ${quest_control?.target4}`)
+		while (answer_check == false) {
+			const answer2 = await context.question(`🧷 Выберите факультет, которому хотите задать приоритет:`,
+				{
+					keyboard: Keyboard.builder()
+					.textButton({ label: 'Пуффендуй', payload: { command: 'puff' }, color: 'secondary' })
+					.textButton({ label: 'Гриффиндор', payload: { command: 'grif' }, color: 'secondary' })
+					.textButton({ label: 'Когтевран', payload: { command: 'coga' }, color: 'secondary' })
+					.textButton({ label: 'Слизерин', payload: { command: 'sliz' }, color: 'secondary' })
+					.oneTime().inline(), answerTimeLimit
+				}
+			)
+			if (answer2.isTimeout) { return await context.send('⏰ Время ожидания на ответ 2-го вопроса истекло!') }
+			if (!answer2.payload) {
+				context.send(`💡 Жмите только по кнопкам с иконками!`)
+			} else {
+				facult += `${answer2.payload.command} `
+				answer_check = true
+			}
+		}
+        let answer_check2 = false
+        let priority = ``
+		while (answer_check2 == false) {
+			const answer2 = await context.question(`🧷 Выберите факультету ${facult} приоритет:`,
+				{
+					keyboard: Keyboard.builder()
+					.textButton({ label: '1', payload: { command: `1` }, color: 'secondary' })
+					.textButton({ label: '2', payload: { command: `2` }, color: 'secondary' })
+					.textButton({ label: '3', payload: { command: `3` }, color: 'secondary' })
+					.textButton({ label: '4', payload: { command: `4` }, color: 'secondary' })
+					.oneTime().inline(), answerTimeLimit
+				}
+			)
+			if (answer2.isTimeout) { return await context.send('⏰ Время ожидания на ответ 2-го вопроса истекло!') }
+			if (!answer2.payload) {
+				context.send(`💡 Жмите только по кнопкам с иконками!`)
+			} else {
+				priority += `${answer2.payload.command}`
+				answer_check2 = true
+			}
+		}
+        let res = null
+        //console.log(`${facult} ${priority}`)
+        switch (priority) {
+            case `1`:
+                res = await prisma.config.update({ where: { id: quest_control?.id }, data: { target1: facult } })
+                await context.send(`Вы поставили первым ${facult}`)
+                await context.send(`Полученные приоритеты:\n1: ${res?.target1}\n2: ${res?.target2}\n3: ${res?.target3}\n4: ${res?.target4}`)
+                break;
+            case `2`:
+                res = await prisma.config.update({ where: { id: quest_control?.id }, data: { target2: facult } })
+                await context.send(`Вы поставили вторым ${facult}`)
+                await context.send(`Полученные приоритеты:\n1: ${res?.target1}\n2: ${res?.target2}\n3: ${res?.target3}\n4: ${res?.target4}`)
+                break;
+            case `3`:
+                res = await prisma.config.update({ where: { id: quest_control?.id }, data: { target3: facult } })
+                await context.send(`Вы поставили третьим ${facult}`)
+                await context.send(`Полученные приоритеты:\n1: ${res?.target1}\n2: ${res?.target2}\n3: ${res?.target3}\n4: ${res?.target4}`)
+                break;
+            case `4`:
+                res = await prisma.config.update({ where: { id: quest_control?.id }, data: { target4: facult } })
+                await context.send(`Вы поставили четвертым ${facult}`)
+                await context.send(`Полученные приоритеты:\n1: ${res?.target1}\n2: ${res?.target2}\n3: ${res?.target3}\n4: ${res?.target4}`)
+                break;
+        }
+        
     })
 }

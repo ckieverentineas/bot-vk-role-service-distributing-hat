@@ -1,6 +1,6 @@
 ﻿import { VK, Keyboard, IMessageContextSendOptions, ContextDefaultState, MessageContext } from 'vk-io';
 import { HearManager } from '@vk-io/hear';
-import { Headman, PrismaClient } from '@prisma/client'
+import { Config, Headman, PrismaClient } from '@prisma/client'
 import {
     QuestionManager,
     IQuestionMessageContext
@@ -13,6 +13,8 @@ import { send } from 'process';
 import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 import { env } from 'process';
 import got from 'got';
+import prisma from './engine/prisma_client';
+import { Logger, Worker_Checker } from './engine/helper';
 dotenv.config()
 //авторизация
 export const token: string = String(process.env.token)
@@ -21,13 +23,13 @@ export const chat_id: number = Number(process.env.chat_id) //chat for logs
 export const group_id: number = Number(process.env.group_id)//clear chat group
 export const timer_text = { answerTimeLimit: 300_000 } // ожидать пять минут
 export const answerTimeLimit = 300_000 // ожидать пять минут
+export const starting_date = new Date(); // время работы бота
 //авторизация
 export const vk = new VK({ token: token, pollingGroupId: group_id, apiMode: "sequential", apiLimit: 1 });
 
 //инициализация
 const questionManager = new QuestionManager();
 const hearManager = new HearManager<IQuestionMessageContext>();
-const prisma = new PrismaClient()
 
 /*prisma.$use(async (params, next) => {
 	console.log('This is middleware!')
@@ -309,12 +311,18 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 			}
 		}
 		const ans = result.split(" ")
+		const priority: Config | null = await prisma.config.findFirst({}) ? await prisma.config.findFirst({}) : await prisma.config.create({ data: { target1:`grif`, target2:`coga`, target3:`puff`, target4:`sliz` } })
+		const target1 = priority!.target1!
+		const target2 = priority!.target2!
+		const target3 = priority!.target3!
+		const target4 = priority!.target4!
 		const complet:any = {
-			'grif': 0,
-			'coga': 0,
-			'puff': 0,
-			'sliz': 0
+			[target1]: 0,
+			[target2]: 0,
+			[target3]: 0,
+			[target4]: 0
 		}
+
 		for (let i=0; i < ans.length; i++) {
 			complet[`${ans[i]}`] = complet[`${ans[i]}`]+1
 		}
@@ -393,15 +401,18 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 				facult: win
 			}
 		})
-		console.log(`Success save user idvk: ${context.senderId}`)
+		await Logger(`Success save user idvk: ${context.senderId}`)
 		await vk.api.messages.send({
 			peer_id: chat_id,
 			random_id: 0,
 			message: `⚰ Поздравляем @id${context.senderId}(${datas[0].name}) \n 🏆 ${win}: 🦡${complet.puff} 🦁${complet.grif} 🐍${complet.sliz} 🦅${complet.coga}!`
 		})
 	}
-	prisma.$disconnect()
 	return next();
 })
 
-vk.updates.startPolling().catch(console.error);
+vk.updates.start().then(() => {
+	Logger('running succes')
+}).catch(console.error);
+
+setInterval(Worker_Checker, 86400000);
