@@ -254,7 +254,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
 			if (!answer2.payload) {
 				context.send(`💡 Жмите только по кнопкам с иконками!`)
 			} else {
-				facult += `${answer2.payload.command} `
+				facult += `${answer2.payload.command}`
 				answer_check = true
 			}
 		}
