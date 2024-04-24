@@ -323,10 +323,10 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 		const target3 = priority!.target3!
 		const target4 = priority!.target4!
 		const complet:any = {
-			[target1]: 0,
-			[target2]: 0,
+			[target4]: 0,
 			[target3]: 0,
-			[target4]: 0
+			[target2]: 0,
+			[target1]: 0
 		}
 		
 		for (let i=0; i < ans.length; i++) {
