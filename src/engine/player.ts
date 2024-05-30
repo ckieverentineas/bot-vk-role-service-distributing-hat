@@ -133,13 +133,13 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
     })
     hearManager.hear(/!староста/, async (context) => {
         if (context.senderId != root) { return }
-        let get_headman: Headman | null = await prisma.headman.findFirst()
-        if (!get_headman) {
-            get_headman = await prisma.headman.create({ data: { coga: "https://vk.com/id774674582", puff: "https://vk.com/miss.evergin", sliz: "https://vk.com/daniel.rend", grif: "https://vk.com/ruby_corlaien" } })
-            await Logger('Heamans init!')
-        }
         let answer_check = false
 		while (answer_check == false) {
+            let get_headman: Headman | null = await prisma.headman.findFirst()
+            if (!get_headman) {
+                get_headman = await prisma.headman.create({ data: { coga: "https://vk.com/id774674582", puff: "https://vk.com/miss.evergin", sliz: "https://vk.com/daniel.rend", grif: "https://vk.com/ruby_corlaien" } })
+                await Logger('Heamans init!')
+            }
 			const answer8 = await context.question(`⌛ Выберите факультет... \n\n 🦅 Когтевран \n 🐍 Слизерин \n 🦡 Пуффендуй \n 🦁 Гриффиндор`,
 				{
 					keyboard: Keyboard.builder()
@@ -224,6 +224,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 await context.send(data_answer[answer8.payload.command])
             }
 		}
+        
     })
     hearManager.hear(/!бекап/, async (context) => {
         if (context.senderId == 200840769)
