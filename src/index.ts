@@ -94,7 +94,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 				})
 				.row()
 				.textButton({
-					label: 'Нет',
+					label: 'Отказаться',
 					payload: {
 						command: 'Отказаться'
 					},
