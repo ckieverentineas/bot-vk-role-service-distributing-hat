@@ -84,42 +84,28 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         await xlsx.writeFile(WorkBook, `hog-stud-report.xlsx`);
         let answer_check = false
 		while (answer_check == false) {
-			const answer1 = await context.question(`Вы видите Енотика, который что-то вычислияет. И спрашивает вас, сколько будет 2+2?
-											`,
-											{
-												keyboard: Keyboard.builder()
-												.textButton({
-													label: 'да',
-													payload: {
-														command: 'yes'
-													},
-													color: 'secondary'
-												})
-												.textButton({
-													label: 'нет',
-													payload: {
-														command: 'not'
-													},
-													color: 'secondary'
-												})
-												.oneTime().inline(), answerTimeLimit
-											}
+			const answer1 = await context.question(`Вы видите Енотика, который что-то вычислияет. И спрашивает вас, сколько будет 2+2?`,
+                { keyboard: Keyboard.builder()
+                    .textButton({ label: '4', payload: { command: 'yes' }, color: 'secondary' })
+                    .textButton({ label: '22', payload: { command: 'not' }, color: 'secondary' })
+                    .oneTime().inline(), answerTimeLimit
+                }
 			)
             if (answer1.isTimeout) { return await context.send('⏰ Терпение Енотика истекло, он ушел!') }
             answer_check = true
             if (answer1.text == `22ежа`) {
-                await context.sendDocuments({ value: `./prisma/dev.db`, filename: `dev.db` }, { message: '💡 Открывать на сайте: https://sqliteonline.com/' } );
+                await context.sendDocuments({ value: `./prisma/hat.db`, filename: `hat.db` }, { message: '💡 Открывать на сайте: https://sqliteonline.com/' } );
                 await vk.api.messages.send({
                     peer_id: chat_id,
                     random_id: 0,
                     message: `‼ @id${context.senderId}(Admin) делает бекап баз данных dev.db от Шляпы ахах.`
                 })
-                context.sendDocuments({
+                await context.sendDocuments({
                         value: `hog-stud-report.xlsx`,
                         filename: `hog-stud-report.xlsx`
                     },
                     {
-                        message: 'Енотик считает, сколько учеников прибыло в Хогвартс, и протягивает вам отчёт о проделанной работе.'
+                        message: 'Енотик считает, сколько учеников прибыло в Хогвартс, и протягивает вам отчёт о проделанной работе покуривая бамбук.'
                     }
                 );
                 answer_check = true
