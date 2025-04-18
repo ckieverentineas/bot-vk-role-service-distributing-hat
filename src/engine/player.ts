@@ -105,7 +105,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                         filename: `hog-stud-report.xlsx`
                     },
                     {
-                        message: 'Енотик считает, сколько учеников прибыло в Хогвартс, и протягивает вам отчёт о проделанной работе покуривая бамбук.'
+                        message: 'Енотик считает, сколько учеников прибыло в Хогвартс, и протягивает вам отчёт о проделанной работе покуривая бамбук премиум класса.'
                     }
                 );
                 answer_check = true
