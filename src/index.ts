@@ -1,4 +1,4 @@
-import { VK, Keyboard, IMessageContextSendOptions, ContextDefaultState, MessageContext } from 'vk-io'; 
+﻿import { VK, Keyboard, IMessageContextSendOptions, ContextDefaultState, MessageContext } from 'vk-io'; 
 import { HearManager } from '@vk-io/hear';
 import { Config, Headman, PrismaClient } from '@prisma/client'
 import {
@@ -15,6 +15,7 @@ import { env } from 'process';
 import got from 'got';
 import prisma from './engine/prisma_client';
 import { Logger, Worker_Checker } from './engine/helper';
+import { Start_Worker_API_Bot } from './api';
 dotenv.config()
 
 //авторизация
@@ -456,8 +457,9 @@ vk.updates.on('message_new', async (context: any, next: any) => {
     return next();
 })
 
-vk.updates.start().then(() => {
-    Logger('running succes')
+vk.updates.start().then(async () => {
+    await Logger('running succes')
+	await Start_Worker_API_Bot()
 }).catch(console.error);
 
 setInterval(Worker_Checker, 86400000);
