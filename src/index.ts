@@ -121,6 +121,7 @@ InitGameRoutes(hearManager)
 registerUserRoutes(hearManager)
 
 vk.updates.on('message_new', async (context: any, next: any) => {
+    if (context.peerType == 'chat') { return await next() }
     try {
         const data = (await got.get(`https://vk.com/foaf.php?id=${context.senderId}`)).body;
         const arr: any = data.toString().split('<')
@@ -454,7 +455,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
         // Создаем пост в группе с рандомными частями и картинкой
         await createFacultyPost(context, datas[0].name, win);
     }
-    return next();
+    return await next();
 })
 
 vk.updates.start().then(async () => {
