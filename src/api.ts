@@ -8,7 +8,7 @@ const domen = `localhost`
 
 // === API для опроса через fetch ===
 app.get('/ping', async (req: any, res: any) => {
-  res.json({ status: 'alive', message: 'Спутник ВК: Я жив!', timestamp: Date.now(), uptime: process.uptime().toFixed(2) + ' сек', });
+  res.json({ status: 'alive', message: 'Шляпа: Я жива!', timestamp: Date.now(), uptime: process.uptime().toFixed(2) + ' сек', });
 });
 
 export async function Start_Worker_API_Bot() {

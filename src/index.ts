@@ -16,6 +16,8 @@ import got from 'got';
 import prisma from './engine/prisma_client';
 import { Logger, Worker_Checker } from './engine/helper';
 import { Start_Worker_API_Bot } from './api';
+// Импортируем банк вопросов
+import { questionBank, finalQuestion, getRandomQuestions } from './questions_bank';
 dotenv.config()
 
 //авторизация
@@ -160,6 +162,34 @@ vk.updates.on('message_new', hearManager.middleware);
 InitGameRoutes(hearManager)
 registerUserRoutes(hearManager)
 
+async function getGroupAdmins(): Promise<number[]> {
+    try {
+        // Получаем администраторов группы
+        const admins = await vk.api.groups.getMembers({
+            group_id: String(group_id),
+            filter: 'managers'
+            // Убираем fields, так как нам нужны только id
+        });
+        
+        // Возвращаем массив ID администраторов
+        return admins.items.map((admin: any) => admin.id);
+    } catch (error) {
+        console.error('Ошибка при получении списка администраторов:', error);
+        return [root]; // В случае ошибки возвращаем хотя бы root
+    }
+}
+
+// Функция для проверки, является ли пользователь администратором группы
+async function isGroupAdmin(userId: number): Promise<boolean> {
+    try {
+        const admins = await getGroupAdmins();
+        return admins.includes(userId) || userId === root;
+    } catch (error) {
+        console.error('Ошибка при проверке администратора:', error);
+        return userId === root; // В случае ошибки проверяем только root
+    }
+}
+
 // Варианты сообщений для просьбы о смене факультета
 const facultyChangeWarnings = [
     "👟 Швыряет тапком\n\n⚖️ Правила Хогвартса Онлайн ясны и неизменны: распределение проходит лишь однажды! Смена факультета возможна исключительно после завершения второго курса.\n\n🚫 Если продолжишь свои манипуляции, то патруль мракоборцев доставит тебя прямиком в Азкабан.",
@@ -203,8 +233,8 @@ vk.updates.on('message_new', async (context: any, next: any) => {
                 const date: any = new Date(date_read)
                 const date_now = Date.now()
                 if (date_now-date < 2592000000) {
-                    context.send(`⁉ Вашей странице меньше месяца. Вы не можете пройти распределение сейчас. Приходите через 30 дней от даты регистрации своего аккаунта!`)
-                    return
+                    await context.send(`⁉ Вашей странице меньше месяца. Вы не можете пройти распределение сейчас. Приходите через 30 дней от даты регистрации своего аккаунта!`)
+                    return;
                 }
             }
         }
@@ -217,7 +247,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
             idvk: context.senderId
         }
     })
-    
+        
     // Если пользователь уже прошел распределение
     if (user_check) {
         // Проверяем, не является ли это кодом сброса
@@ -279,13 +309,20 @@ vk.updates.on('message_new', async (context: any, next: any) => {
             
             if (answer.isTimeout) return;
             
+            // ОТПРАВЛЯЕМ СООБЩЕНИЕ СРАЗУ ПОСЛЕ НАЖАТИЯ КНОПКИ
             if (answer.payload?.command === 'change_faculty') {
                 const randomWarning = facultyChangeWarnings[Math.floor(Math.random() * facultyChangeWarnings.length)];
                 await context.send(randomWarning);
-            } else if (answer.payload?.command === 'return_to_school') {
+                return;
+            } 
+
+            if (answer.payload?.command === 'return_to_school') {
                 const randomMessage = returnToSchoolMessages[Math.floor(Math.random() * returnToSchoolMessages.length)];
                 await context.send(randomMessage);
-            } else if (answer.payload?.command === 'enter_reset_code') {
+                return;
+            } 
+
+            if (answer.payload?.command === 'enter_reset_code') {
                 const codeAnswer = await context.question(
                     `🔐 Введите магический код сброса:`,
                     {
@@ -322,11 +359,17 @@ vk.updates.on('message_new', async (context: any, next: any) => {
                 } else {
                     await context.send(`❌ Неверный магический код!`);
                 }
-            } else if (answer.payload?.command === 'cancel') {
+                return;
+            } 
+
+            if (answer.payload?.command === 'cancel') {
                 await context.send('✨ Шляпа кивает: "Хорошо, если понадобится помощь — обращайтесь!"');
+                return;
             }
+            
             return;
         }
+        return;
     }
     
     // Если пользователь еще не прошел распределение
@@ -355,7 +398,8 @@ vk.updates.on('message_new', async (context: any, next: any) => {
         );
         
         if (answer.isTimeout) { 
-            return await context.send('⏰ Время ожидания на подтверждение согласия истекло!')
+            await context.send('⏰ Время ожидания на подтверждение согласия истекло!')
+            return;
         }
         
         if (!/да|yes|Согласиться|конечно/i.test(answer.text|| '{}')) {
@@ -371,7 +415,8 @@ vk.updates.on('message_new', async (context: any, next: any) => {
         while (name_check == false) {
             const name = await context.question(`🧷 Введите имя и фамилию персонажа (канонных персов брать нельзя, по типу Гарри Поттер и т.д.): \n❗Максимум 30 символов`, timer_text)
             if (name.isTimeout) { 
-                return await context.send('⏰ Время ожидания на ввод имени истекло!') 
+                await context.send('⏰ Время ожидания на ввод имени истекло!')
+                return;
             }
             
             if (name.text.length <= 30) {
@@ -401,7 +446,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
                 let warner = false
                 
                 if (name.text.replace(/[^а-яА-Я -]/gi, '') != name.text) {
-                    context.send(`💡 Внимание! Пишите только русскими символами (пробелы и дефисы разрешены)`)
+                    await context.send(`💡 Внимание! Пишите только русскими символами (пробелы и дефисы разрешены)`)
                     warner = true
                 }
 
@@ -412,7 +457,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
                         for (let j = 0; j < blacklist.length; j++) {
                             if (nameParts[i].toLowerCase() === blacklist[j].toLowerCase()) {
                                 warner = true;
-                                context.send(`⚡ Внимание! Имя "${blacklist[j]}" является запрещенным!`);
+                                await context.send(`⚡ Внимание! Имя "${blacklist[j]}" является запрещенным!`);
                                 break;
                             }
                         }
@@ -424,224 +469,159 @@ vk.updates.on('message_new', async (context: any, next: any) => {
                     name_check = true
                     datas.push({name: `${name.text}`})
                 } else {
-                    context.send(`✍️ Введите имя персонажа должным образом!`)
+                    await context.send(`✍️ Введите имя персонажа должным образом!`)
                 }
                 
             } else {
-                context.send(`📏 Имя должно содержать не более 30 символов!`)
+                await context.send(`📏 Имя должно содержать не более 30 символов!`)
             }
         }
         
-        // Вопросы распределения (остаются без изменений)
-        let answer_check = false
-        let result = ""
-        
-        while (answer_check == false) {
-            const answer1 = await context.question(`💬 Внезапно шляпа оказывается на вас, взламывает ваш мозг! \n🧷 В потоке мыслей всплывает первый вопрос: \n\n🚪 Представь, что ты нашёл таинственную дверь в запретной части замка. Что ты сделаешь? \n\n👀 Открою её сразу, сердце так и рвётся узнать, что за ней. \n🔐 Постараюсь понять, кто и зачем её закрыл, и смогу ли я использовать это в свою пользу. \n🔍 Изучу сначала надписи, замки, магические следы — может, дверь сама подскажет ответ. \n🤝 Подожду с друзьями и решу вместе с ними, безопасно ли это.`,
-                {
-                    keyboard: Keyboard.builder()
-                    .textButton({ label: '👀', payload: { command: 'grif' }, color: 'secondary' })
-                    .textButton({ label: '🔐', payload: { command: 'sliz' }, color: 'secondary' })
-                    .textButton({ label: '🔍', payload: { command: 'coga' }, color: 'secondary' })
-                    .textButton({ label: '🤝', payload: { command: 'puff' }, color: 'secondary' })
-                    .oneTime().inline(), 
-                    answerTimeLimit
+        // Генерация случайных вопросов из банка
+        const randomQuestions = getRandomQuestions(7); // Берем 7 случайных вопросов
+        const allQuestions = [...randomQuestions, finalQuestion]; // Добавляем финальный вопрос 8-м
+
+        let result = "";
+
+        // Проходим по всем вопросам
+        for (let qIndex = 0; qIndex < allQuestions.length; qIndex++) {
+            const question = allQuestions[qIndex];
+            let answer_check = false;
+            
+            while (answer_check == false) {
+                // Создаем клавиатуру из вариантов ответа
+                const keyboard = Keyboard.builder();
+
+                // Распределяем кнопки по строкам (максимум 4 кнопки в строке)
+                const options = question.options;
+                
+                // Если 4 кнопки - все в одну строку
+                if (options.length === 4) {
+                    options.forEach(option => {
+                        keyboard.textButton({
+                            label: option.emoji,
+                            payload: { command: option.faculty },
+                            color: 'secondary'
+                        });
+                    });
+                    keyboard.row(); // Одна строка
+                } 
+                // Если 5 кнопок - 3 в первую строку, 2 во вторую
+                else if (options.length === 5) {
+                    // Первые 3 кнопки
+                    for (let i = 0; i < 3; i++) {
+                        keyboard.textButton({
+                            label: options[i].emoji,
+                            payload: { command: options[i].faculty },
+                            color: 'secondary'
+                        });
+                    }
+                    keyboard.row();
+                    
+                    // Оставшиеся 2 кнопки
+                    for (let i = 3; i < 5; i++) {
+                        keyboard.textButton({
+                            label: options[i].emoji,
+                            payload: { command: options[i].faculty },
+                            color: 'secondary'
+                        });
+                    }
+                    keyboard.row();
                 }
-            )
-            
-            if (answer1.isTimeout) { 
-                return await context.send('⏰ Время ожидания на ответ 1-го вопроса истекло!') 
-            }
-            
-            if (!answer1.payload) {
-                context.send(`💡 Нажмите на одну из кнопок с иконками!`)
-            } else {
-                result += `${answer1.payload.command} `
-                answer_check = true
-            }
-        }
-        
-        answer_check = false
-        while (answer_check == false) {
-            const answer2 = await context.question(`🧷 В потоке мыслей всплывает второй вопрос: \n\n⚠ Ты оказался в группе, которой поручили важное задание. Какую роль ты займёшь? \n\n🥇 Прослежу, чтобы никто не отставал и всё было сделано аккуратно. \n🎲 Буду планировать так, чтобы мы не проиграли и оказались в выигрыше. \n🧩 Придумаю необычный способ выполнить задачу. \n🏆 Возьму ответственность и поведу всех за собой.`,
-                {
-                    keyboard: Keyboard.builder()
-                    .textButton({ label: '🥇', payload: { command: 'puff' }, color: 'secondary' })
-                    .textButton({ label: '🎲', payload: { command: 'sliz' }, color: 'secondary' })
-                    .textButton({ label: '🧩', payload: { command: 'coga' }, color: 'secondary' })
-                    .textButton({ label: '🏆', payload: { command: 'grif' }, color: 'secondary' })
-                    .oneTime().inline(), 
-                    answerTimeLimit
+                // Если 6 кнопок - по 3 в две строки
+                else if (options.length === 6) {
+                    // Первые 3 кнопки
+                    for (let i = 0; i < 3; i++) {
+                        keyboard.textButton({
+                            label: options[i].emoji,
+                            payload: { command: options[i].faculty },
+                            color: 'secondary'
+                        });
+                    }
+                    keyboard.row();
+                    
+                    // Вторые 3 кнопки
+                    for (let i = 3; i < 6; i++) {
+                        keyboard.textButton({
+                            label: options[i].emoji,
+                            payload: { command: options[i].faculty },
+                            color: 'secondary'
+                        });
+                    }
+                    keyboard.row();
                 }
-            )
-            
-            if (answer2.isTimeout) { 
-                return await context.send('⏰ Время ожидания на ответ 2-го вопроса истекло!') 
-            }
-            
-            if (!answer2.payload) {
-                context.send(`💡 Нажмите на одну из кнопок с иконками!`)
-            } else {
-                result += `${answer2.payload.command} `
-                answer_check = true
-            }
-        }
-        
-        answer_check = false
-        while (answer_check == false) {
-            const answer3 = await context.question(`🧷 В потоке мыслей всплывает третий вопрос: \n\n💢 Какое качество в людях тебя раздражает сильнее всего \n\n🤮 Бесцельность и отсутствие амбиций. \n🥴 Эгоизм. \n🥶 Трусость. \n🥵 Невежество.`,
-                {
-                    keyboard: Keyboard.builder()
-                    .textButton({ label: '🤮', payload: { command: 'sliz' }, color: 'secondary' })
-                    .textButton({ label: '🥴', payload: { command: 'puff' }, color: 'secondary' })
-                    .textButton({ label: '🥶', payload: { command: 'grif' }, color: 'secondary' })
-                    .textButton({ label: '🥵', payload: { command: 'coga' }, color: 'secondary' })
-                    .oneTime().inline(), 
-                    answerTimeLimit
+                // Если 7 кнопок - 4 в первую, 3 во вторую
+                else if (options.length === 7) {
+                    // Первые 4 кнопки
+                    for (let i = 0; i < 4; i++) {
+                        keyboard.textButton({
+                            label: options[i].emoji,
+                            payload: { command: options[i].faculty },
+                            color: 'secondary'
+                        });
+                    }
+                    keyboard.row();
+                    
+                    // Оставшиеся 3 кнопки
+                    for (let i = 4; i < 7; i++) {
+                        keyboard.textButton({
+                            label: options[i].emoji,
+                            payload: { command: options[i].faculty },
+                            color: 'secondary'
+                        });
+                    }
+                    keyboard.row();
                 }
-            )
-            
-            if (answer3.isTimeout) { 
-                return await context.send('⏰ Время ожидания на ответ 3-го вопроса истекло!') 
-            }
-            
-            if (!answer3.payload) {
-                context.send(`💡 Нажмите на одну из кнопок с иконками!`)
-            } else {
-                result += `${answer3.payload.command} `
-                answer_check = true
-            }
-        }
-        
-        answer_check = false
-        while (answer_check == false) {
-            const answer4 = await context.question(`🧷 В потоке мыслей всплывает четвертый вопрос: \n\n🍪 Ты оказался в Хогсмиде с мешочком галлеонов. Что купишь первым делом? \n\n🎆 Огромные фейерверки, чтобы устроить шоу. \n🍰 Сладости, которые имеют несуществующие волшебные эффекты. \n📜 Редкую книгу с ответами на вопросы всего мира. \n🔮 Амулет, который принесёт удачу и исполнит любое желание.`,
-                {
-                    keyboard: Keyboard.builder()
-                    .textButton({ label: '🎆', payload: { command: 'puff' }, color: 'secondary' })
-                    .textButton({ label: '🍰', payload: { command: 'coga' }, color: 'secondary' })
-                    .textButton({ label: '📜', payload: { command: 'grif' }, color: 'secondary' })
-                    .textButton({ label: '🔮', payload: { command: 'sliz' }, color: 'secondary' })
-                    .oneTime().inline(), 
-                    answerTimeLimit
+                // Если 8 кнопок - по 4 в две строки
+                else if (options.length === 8) {
+                    // Первые 4 кнопки
+                    for (let i = 0; i < 4; i++) {
+                        keyboard.textButton({
+                            label: options[i].emoji,
+                            payload: { command: options[i].faculty },
+                            color: 'secondary'
+                        });
+                    }
+                    keyboard.row();
+                    
+                    // Вторые 4 кнопки
+                    for (let i = 4; i < 8; i++) {
+                        keyboard.textButton({
+                            label: options[i].emoji,
+                            payload: { command: options[i].faculty },
+                            color: 'secondary'
+                        });
+                    }
+                    keyboard.row();
                 }
-            )
-            
-            if (answer4.isTimeout) { 
-                return await context.send('⏰ Время ожидания на ответ 4-го вопроса истекло!') 
-            }
-            
-            if (!answer4.payload) {
-                context.send(`💡 Нажмите на одну из кнопок с иконками!`)
-            } else {
-                result += `${answer4.payload.command} `
-                answer_check = true
-            }
-        }
-        
-        answer_check = false
-        while (answer_check == false) {
-            const answer5 = await context.question(`🧷 В потоке мыслей всплывает пятый вопрос: \n\n🕍 В классе профессор задаёт сложный вопрос, а все молчат. Что сделаешь ты? \n\n👍 Подниму руку, даже если не уверен — авось угадаю. \n✊ Подожду, пока кто-то другой ответит и дополню. \n🧠 Сам найду правильный ответ. \n🤝 Постараюсь поддержать товарища, который колеблется, чтобы он ответил.`,
-                {
-                    keyboard: Keyboard.builder()
-                    .textButton({ label: '👍', payload: { command: 'grif' }, color: 'secondary' })
-                    .textButton({ label: '✊', payload: { command: 'sliz' }, color: 'secondary' })
-                    .textButton({ label: '🧠', payload: { command: 'coga' }, color: 'secondary' })
-                    .textButton({ label: '🤝', payload: { command: 'puff' }, color: 'secondary' })
-                    .oneTime().inline(), 
-                    answerTimeLimit
+
+                keyboard.oneTime().inline();
+                
+                // Формируем текст с вариантами ответов
+                let optionsText = '\n\n';
+                question.options.forEach((opt, idx) => {
+                    optionsText += `${opt.emoji} — ${opt.text}\n`;
+                });
+
+                const answer = await context.question(
+                    `🧷 Вопрос ${qIndex + 1} из ${allQuestions.length}:\n\n${question.text}${optionsText}\n👇 Выберите вариант, нажав на соответствующую кнопку:`,
+                    {
+                        keyboard: keyboard,
+                        answerTimeLimit: answerTimeLimit
+                    }
+                );
+                
+                if (answer.isTimeout) { 
+                    await context.send('⏰ Время ожидания на ответ истекло!')
+                    return;
                 }
-            )
-            
-            if (answer5.isTimeout) { 
-                return await context.send('⏰ Время ожидания на ответ 5-го вопроса истекло!') 
-            }
-            
-            if (!answer5.payload) {
-                context.send(`💡 Нажмите на одну из кнопок с иконками!`)
-            } else {
-                result += `${answer5.payload.command} `
-                answer_check = true
-            }
-        }
-        
-        answer_check = false
-        while (answer_check == false) {
-            const answer6 = await context.question(`🧷 В потоке мыслей всплывает шестой вопрос: \n\n🖼 Какая картина из указанных обязательно бы привлекла твое внимание? \n\n🔥 Огненный факел, ярко освещающий тьму. \n💀 Мрачные рыцари, стоящие в ряд.  \n🌀 Лабиринт, полный загадок и тайн. \n🕸 Чьи-то силуэты на фоне коридора. \n`,
-                {
-                    keyboard: Keyboard.builder()
-                    .textButton({ label: '🔥', payload: { command: 'puff' }, color: 'secondary' })
-                    .textButton({ label: '💀', payload: { command: 'grif' }, color: 'secondary' })
-                    .textButton({ label: '🌀', payload: { command: 'coga' }, color: 'secondary' })
-                    .textButton({ label: '🕸', payload: { command: 'sliz' }, color: 'secondary' })
-                    .oneTime().inline(), 
-                    answerTimeLimit
+                
+                if (!answer.payload) {
+                    await context.send(`💡 Нажмите на одну из кнопок с иконками!`);
+                } else {
+                    result += `${answer.payload.command} `;
+                    answer_check = true;
                 }
-            )
-            
-            if (answer6.isTimeout) { 
-                return await context.send('⏰ Время ожидания на ответ 6-го вопроса истекло!') 
-            }
-            
-            if (!answer6.payload) {
-                context.send(`💡 Нажмите на одну из кнопок с иконками!`)
-            } else {
-                result += `${answer6.payload.command} `
-                answer_check = true
-            }
-        }
-        
-        answer_check = false
-        while (answer_check == false) {
-            const answer7 = await context.question(`🧷 В потоке мыслей всплывает седьмой вопрос: \n\n👨‍🎓 Если бы ты стал преподавателем в Хогвартсе, какой предмет выбрал бы? \n\n🌿 Травология или уход за магическими существами. \n🚀 История магии или астрономия. \n👻 Защита от тёмных искусств или трансфигурация. \n🍵 Искусство зельеварения или заклинания.`,
-                {
-                    keyboard: Keyboard.builder()
-                    .textButton({ label: '🌿', payload: { command: 'puff' }, color: 'secondary'})
-                    .textButton({ label: '🚀', payload: { command: 'coga' }, color: 'secondary' })
-                    .textButton({ label: '👻', payload: { command: 'grif' }, color: 'secondary' })
-                    .textButton({ label: '🍵', payload: { command: 'sliz' }, color: 'secondary' })
-                    .oneTime().inline(), 
-                    answerTimeLimit
-                }
-            )
-            
-            if (answer7.isTimeout) { 
-                return await context.send('⏰ Время ожидания на ответ 7-го вопроса истекло!') 
-            }
-            
-            if (!answer7.payload) {
-                context.send(`💡 Нажмите на одну из кнопок с иконками!`)
-            } else {
-                result += `${answer7.payload.command} `
-                answer_check = true
-            }
-        }
-        
-        answer_check = false
-        while (answer_check == false) {
-            const answer8 = await context.question(`🧷 В потоке мыслей всплывает последний вопрос: \n\n⌛ Выберите два наиболее предпочтительных факультета... \n\n🦅 Когтевран \n🐍 Слизерин \n🦡 Пуффендуй \n🦁 Гриффиндор`,
-                {
-                    keyboard: Keyboard.builder()
-                    .textButton({ label: '🦡🦁', payload: { command: 'puff grif' }, color: 'secondary' })
-                    .textButton({ label: '🦡🐍', payload: { command: 'puff sliz' }, color: 'secondary' })
-                    .textButton({ label: '🦡🦅', payload: { command: 'puff coga' }, color: 'secondary' }).row()
-                    .textButton({ label: '🦁🐍', payload: { command: 'grif sliz' }, color: 'secondary' })
-                    .textButton({ label: '🦁🦅', payload: { command: 'grif coga' }, color: 'secondary' })
-                    .textButton({ label: '🦅🐍', payload: { command: 'coga sliz' }, color: 'secondary' })
-                    .oneTime().inline(), 
-                    answerTimeLimit
-                }
-            )
-            
-            if (answer8.isTimeout) { 
-                return await context.send('⏰ Время ожидания на ответ финального вопроса истекло!') 
-            }
-            
-            if (!answer8.payload) {
-                context.send(`💡 Нажмите на одну из кнопок с иконками!`)
-            } else {
-                result += `${answer8.payload.command}`
-                answer_check = true
             }
         }
         
@@ -659,7 +639,9 @@ vk.updates.on('message_new', async (context: any, next: any) => {
         }
         
         for (let i=0; i < ans.length; i++) {
-            complet[`${ans[i]}`] = complet[`${ans[i]}`]+1
+            if (ans[i] && complet.hasOwnProperty(ans[i])) {
+                complet[`${ans[i]}`] = complet[`${ans[i]}`]+1
+            }
         }
         
         const win = Object.entries(complet).reduce((acc:any, curr:any) => acc[1] > curr[1] ? acc : curr)[0]
@@ -681,10 +663,10 @@ vk.updates.on('message_new', async (context: any, next: any) => {
             data: {
                 idvk: context.senderId,
                 name: datas[0].name,
-                sliz: complet.sliz,
-                coga: complet.coga,
-                puff: complet.puff,
-                grif: complet.grif,
+                sliz: complet.sliz || 0,
+                coga: complet.coga || 0,
+                puff: complet.puff || 0,
+                grif: complet.grif || 0,
                 facult: win
             }
         })
@@ -693,12 +675,16 @@ vk.updates.on('message_new', async (context: any, next: any) => {
         await vk.api.messages.send({
             peer_id: chat_id,
             random_id: 0,
-            message: `⚰ Поздравляем @id${context.senderId}(${datas[0].name}) \n 🏆 ${win}: 🦡${complet.puff} 🦁${complet.grif} 🐍${complet.sliz} 🦅${complet.coga}!`
+            message: `⚰ Поздравляем @id${context.senderId}(${datas[0].name}) \n 🏆 ${win}: 🦡${complet.puff || 0} 🦁${complet.grif || 0} 🐍${complet.sliz || 0} 🦅${complet.coga || 0}!`
         })
         
         // Создаем пост в группе с рандомными частями и картинкой
         await createFacultyPost(context, datas[0].name, win);
+        
+        return; // ВАЖНО: завершаем выполнение после успешной регистрации
     }
+    
+    // Если ни одно условие не сработало, передаем дальше
     return await next();
 })
 

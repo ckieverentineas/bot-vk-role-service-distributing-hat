@@ -256,8 +256,12 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
     });
     
     hearManager.hear(/!приоритеты/, async (context) => {
-        if (context.senderId != root) { 
-            return await context.send(`🚫 Доступно только администрации!\n\n⚡ Настройка приоритетов — прерогатива Хранителей!`) 
+        // Импортируем root для проверки
+        const { root } = require('..');
+        
+        // Проверяем, является ли пользователь администратором группы или root
+        if (!await isGroupAdmin(context.senderId)) { 
+            return await context.send(`🚫 Доступ запрещён!\n\n⚡ Эта команда доступна только Хранителям и администраторам Хогвартса!`) 
         }
         
         const quest_control: Config | null = await prisma.config.findFirst({}) ? await prisma.config.findFirst({}) : await prisma.config.create({ 
@@ -285,9 +289,9 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 `🎯 Выбор факультета для изменения приоритета\n\nВыберите факультет:`,
                 {
                     keyboard: Keyboard.builder()
-                    .textButton({ label: '🦡 Пуффендуй', payload: { command: 'puff' }, color: 'secondary' })
-                    .textButton({ label: '🦁 Гриффиндор', payload: { command: 'grif' }, color: 'secondary' })
-                    .textButton({ label: '🦅 Когтевран', payload: { command: 'coga' }, color: 'secondary' })
+                    .textButton({ label: '🦡 Пуффендуй', payload: { command: 'puff' }, color: 'secondary' }).row()
+                    .textButton({ label: '🦁 Гриффиндор', payload: { command: 'grif' }, color: 'secondary' }).row()
+                    .textButton({ label: '🦅 Когтевран', payload: { command: 'coga' }, color: 'secondary' }).row()
                     .textButton({ label: '🐍 Слизерин', payload: { command: 'sliz' }, color: 'secondary' })
                     .oneTime().inline(), 
                     answerTimeLimit
@@ -314,9 +318,9 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 `📊 Установка приоритета для ${facult.toUpperCase()}\n\nВыберите место:`,
                 {
                     keyboard: Keyboard.builder()
-                    .textButton({ label: '🥇 1-е место', payload: { command: `1` }, color: 'secondary' })
-                    .textButton({ label: '🥈 2-е место', payload: { command: `2` }, color: 'secondary' })
-                    .textButton({ label: '🥉 3-е место', payload: { command: `3` }, color: 'secondary' })
+                    .textButton({ label: '🥇 1-е место', payload: { command: `1` }, color: 'secondary' }).row()
+                    .textButton({ label: '🥈 2-е место', payload: { command: `2` }, color: 'secondary' }).row()
+                    .textButton({ label: '🥉 3-е место', payload: { command: `3` }, color: 'secondary' }).row()
                     .textButton({ label: '📊 4-е место', payload: { command: `4` }, color: 'secondary' })
                     .oneTime().inline(), 
                     answerTimeLimit
@@ -385,4 +389,24 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             );
         }
     });
+}
+
+async function isGroupAdmin(userId: number): Promise<boolean> {
+    try {
+        // Импортируем vk и group_id из index
+        const { vk, group_id, root } = require('..');
+        
+        // Получаем администраторов группы
+        const admins = await vk.api.groups.getMembers({
+            group_id: String(group_id),
+            filter: 'managers'
+        });
+        
+        // Возвращаем true, если пользователь админ или root
+        return admins.items.map((admin: any) => admin.id).includes(userId) || userId === root;
+    } catch (error) {
+        console.error('Ошибка при проверке администратора:', error);
+        const { root } = require('..');
+        return userId === root; // В случае ошибки проверяем только root
+    }
 }
