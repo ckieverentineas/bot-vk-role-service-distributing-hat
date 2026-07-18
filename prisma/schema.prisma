@@ -14,7 +14,7 @@ datasource db {
 
 model User {
   id     Int      @id @default(autoincrement())
-  idvk   Int
+  idvk   BigInt
   name   String
   coga   Int
   puff   Int
