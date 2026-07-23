@@ -1,9 +1,9 @@
-import { VK, Keyboard, IMessageContextSendOptions, ContextDefaultState, MessageContext } from 'vk-io'; 
+﻿import { VK, Keyboard, IMessageContextSendOptions, ContextDefaultState, MessageContext } from 'vk-io'; 
 import { HearManager } from '@vk-io/hear';
-import { Config, Headman, PrismaClient } from '@prisma/client'
+import { Headman, PrismaClient } from '@prisma/client'
 import {
     QuestionManager,
-    IQuestionMessageContext
+    QuestionMessageContext
 } from 'vk-io-question';
 import { randomInt } from 'crypto';
 import { timeStamp } from 'console';
@@ -15,6 +15,8 @@ import { env } from 'process';
 import got from 'got';
 import prisma from './engine/prisma_client';
 import { Logger, Worker_Checker } from './engine/helper';
+import { askQuestion } from './engine/question';
+import { getConfig, getResetCode } from './engine/config';
 import { Start_Worker_API_Bot } from './api';
 // Импортируем банк вопросов
 import { questionBank, finalQuestion, getRandomQuestions } from './questions_bank';
@@ -24,13 +26,10 @@ dotenv.config()
 export const token: string = String(process.env.token)
 export const root: number = Number(process.env.root) //root user
 export const chat_id: number = Number(process.env.chat_id) //chat for logs
-export const group_id: number = Number(process.env.group_id)//clear chat group
+export let group_id: number = Number(process.env.group_id)//fallback group id from env
 export const timer_text = { answerTimeLimit: 300_000 } // ожидать пять минут
 export const answerTimeLimit = 300_000 // ожидать пять минут
 export const starting_date = new Date(); // время работы бота
-
-// Глобальная переменная для кода сброса
-export let resetCode = "1000-7";
 
 // Картинки для факультетов (нужно заменить на реальные photo_id из альбома группы)
 const facultyPhotos = {
@@ -138,29 +137,61 @@ async function createFacultyPost(context: any, name: string, faculty: string) {
     });
 }
 
-async function Group_Id_Get() {
-    const vk = new VK({ token: token, apiLimit: 1 });
-    const [group] = await vk.api.groups.getById(vk);
-    const groupId = group.id;
-    return groupId
-}
-export const vk = new VK({ 
-    token: token, 
-    pollingGroupId: Number(Group_Id_Get()), 
-    apiMode: "sequential", 
-    apiLimit: 1 
-});
-
 //инициализация
 const questionManager = new QuestionManager();
-const hearManager = new HearManager<IQuestionMessageContext>();
+const hearManager = new HearManager<MessageContext & QuestionMessageContext>();
 
-vk.updates.use(questionManager.middleware);
-vk.updates.on('message_new', hearManager.middleware);
+export let vk: VK;
 
-//регистрация роутов из других классов
-InitGameRoutes(hearManager)
-registerUserRoutes(hearManager)
+async function resolveGroupId(): Promise<number> {
+    const probeVk = new VK({
+        token: token,
+        apiMode: "sequential",
+        apiLimit: 1
+    });
+
+    const currentGroup = await probeVk.api.groups.getById({});
+    const detectedGroupId = currentGroup.groups[0]?.id;
+
+    if (!detectedGroupId) {
+        throw new Error("Не удалось определить id сообщества по токену");
+    }
+
+    if (Number.isFinite(group_id) && group_id > 0 && group_id !== detectedGroupId) {
+        console.warn(`⚠️ group_id из .env (${group_id}) отличается от id токена (${detectedGroupId}); использую id токена.`);
+    }
+
+    return detectedGroupId;
+}
+
+async function bootstrap() {
+    group_id = await resolveGroupId();
+
+    vk = new VK({
+        token: token,
+        pollingGroupId: group_id,
+        apiMode: "sequential",
+        apiLimit: 1
+    });
+
+    vk.updates.use(questionManager.middleware);
+    vk.updates.on('message_new', hearManager.middleware);
+
+    //регистрация роутов из других классов
+    InitGameRoutes(hearManager)
+    registerUserRoutes(hearManager)
+    registerMainRoutes()
+
+    await vk.updates.start();
+    await Logger('✅ Бот успешно запущен!')
+    await Start_Worker_API_Bot()
+    setInterval(Worker_Checker, 86400000);
+}
+
+bootstrap().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+});
 
 async function getGroupAdmins(): Promise<number[]> {
     try {
@@ -214,14 +245,17 @@ const returnToSchoolMessages = [
     "🗝️ Звякают ключи Филча\n\n🚪 Двери Хогвартса Онлайн открываются для возвращающихся лишь по особому распоряжению.\n\n📩 Пиши сюда: https://vk.com/hogonline."
 ];
 
+function registerMainRoutes() {
 vk.updates.on('message_new', async (context: any, next: any) => {
     // Игнорируем сообщения из лог-чата
     if (context.peerId === chat_id) {
         return await next();
     }
     
-    if (context.peerType == 'chat') { 
-        return await next() 
+    // Новые личные страницы VK могут приходить с peerType='chat',
+    // поэтому пропускаем только настоящие беседы, где peerId отличается от senderId.
+    if (context.peerType === 'chat' && context.peerId !== context.senderId) {
+        return await next();
     }
     
     try {
@@ -250,8 +284,10 @@ vk.updates.on('message_new', async (context: any, next: any) => {
         
     // Если пользователь уже прошел распределение
     if (user_check) {
+        const currentResetCode = await getResetCode();
+
         // Проверяем, не является ли это кодом сброса
-        if (context.text === resetCode) {
+        if (context.text?.trim() === currentResetCode) {
             const delatt = await prisma.user.delete({
                 where: {
                     id: user_check.id
@@ -267,7 +303,8 @@ vk.updates.on('message_new', async (context: any, next: any) => {
         // Игнорируем команды (начинающиеся с !)
         if (!context.text?.startsWith('!') && context.text) {
             // Если это не команда и не код сброса - показываем меню с ДОПОЛНИТЕЛЬНЫМИ КНОПКАМИ
-            const answer = await context.question(
+            const answer = await askQuestion(
+                context,
                 `🎩 Шляпа приподнимается и смотрит на вас, прищурившись:\n"Кажется, я вас не совсем поняла. Уточните, что требуется?"`,
                 {
                     keyboard: Keyboard.builder()
@@ -307,23 +344,26 @@ vk.updates.on('message_new', async (context: any, next: any) => {
                 }
             );
             
-            if (answer.isTimeout) return;
+            if (!answer) return;
+
+            const answerPayload = answer.messagePayload as { command?: string } | undefined;
             
             // ОТПРАВЛЯЕМ СООБЩЕНИЕ СРАЗУ ПОСЛЕ НАЖАТИЯ КНОПКИ
-            if (answer.payload?.command === 'change_faculty') {
+            if (answerPayload?.command === 'change_faculty') {
                 const randomWarning = facultyChangeWarnings[Math.floor(Math.random() * facultyChangeWarnings.length)];
                 await context.send(randomWarning);
                 return;
             } 
 
-            if (answer.payload?.command === 'return_to_school') {
+            if (answerPayload?.command === 'return_to_school') {
                 const randomMessage = returnToSchoolMessages[Math.floor(Math.random() * returnToSchoolMessages.length)];
                 await context.send(randomMessage);
                 return;
             } 
 
-            if (answer.payload?.command === 'enter_reset_code') {
-                const codeAnswer = await context.question(
+            if (answerPayload?.command === 'enter_reset_code') {
+                const codeAnswer = await askQuestion(
+                    context,
                     `🔐 Введите магический код сброса:`,
                     {
                         keyboard: Keyboard.builder()
@@ -339,14 +379,16 @@ vk.updates.on('message_new', async (context: any, next: any) => {
                     }
                 );
                 
-                if (codeAnswer.isTimeout) return;
+                if (!codeAnswer) return;
+
+                const codeAnswerPayload = codeAnswer.messagePayload as { command?: string } | undefined;
                 
-                if (codeAnswer.payload?.command === 'cancel_reset') {
+                if (codeAnswerPayload?.command === 'cancel_reset') {
                     await context.send('❌ Операция сброса отменена.');
                     return;
                 }
                 
-                if (codeAnswer.text === resetCode) {
+                if (codeAnswer.text?.trim() === currentResetCode) {
                     const delatt = await prisma.user.delete({
                         where: {
                             id: user_check.id
@@ -362,7 +404,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
                 return;
             } 
 
-            if (answer.payload?.command === 'cancel') {
+            if (answerPayload?.command === 'cancel') {
                 await context.send('✨ Шляпа кивает: "Хорошо, если понадобится помощь — обращайтесь!"');
                 return;
             }
@@ -374,7 +416,8 @@ vk.updates.on('message_new', async (context: any, next: any) => {
     
     // Если пользователь еще не прошел распределение
     if (!user_check) {
-        const answer = await context.question(
+        const answer = await askQuestion(
+            context,
             '🧷 Внимание, вопрос на миллион галлеонов: ты действительно жаждешь прикоснуться к прекрасному, то бишь пройти распределение и вступить в ряды студентов текстовой ролевой игры [https://vk.com/hogonline|Хогвартс Онлайн]? Понимаешь ли ты, что после того как древняя и местами вонючая Шляпа определит твою судьбу, на горизонте материализуется староста твоего факультета — существо, наделённое полномочиями докапываться до тебя с вопросами «ты где пропадал(а), на зельеварение забил(а), почему в банке до сих пор не зарегистрирован(а) и где вообще твоя мантия парадная»? Осознаёшь ли ты, что декана придётся не просто знать в лицо, а добавить в друзья, потому что так надо, так записано в древних свитках, и спорить с этим бесполезно? Готов(а) ли ты к тому, что твоя жизнь разделится на «до» и «после», появятся долги по учёбе, необходимость общаться с сокурсниками и прочие прелести социальной жизни, от которых некоторые специально в Хогвартс и поступают, чтобы сбежать от маггловской реальности? Если ты всё это осмыслил(а), принял(а), переварил(а) и всё ещё горишь желанием — нажимай зелёную кнопку, и да пребудет с тобой магия. Если же ты просто хотел(а) потыкать кнопки, узнать свой факультет и свалить в закат — нажми красную и живи спокойно, не множа ряды тех, кто пропадает через неделю.',
             {
                 keyboard: Keyboard.builder()
@@ -397,7 +440,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
             }
         );
         
-        if (answer.isTimeout) { 
+        if (!answer) { 
             await context.send('⏰ Время ожидания на подтверждение согласия истекло!')
             return;
         }
@@ -413,13 +456,15 @@ vk.updates.on('message_new', async (context: any, next: any) => {
         let name_check = false
         let datas: any = []
         while (name_check == false) {
-            const name = await context.question(`🧷 Введите имя и фамилию персонажа (канонных персов брать нельзя, по типу Гарри Поттер и т.д.): \n❗Максимум 30 символов`, timer_text)
-            if (name.isTimeout) { 
+            const name = await askQuestion(context, `🧷 Введите имя и фамилию персонажа (канонных персов брать нельзя, по типу Гарри Поттер и т.д.): \n❗Максимум 30 символов`, timer_text)
+            if (!name) { 
                 await context.send('⏰ Время ожидания на ввод имени истекло!')
                 return;
             }
             
-            if (name.text.length <= 30) {
+            const characterName = name.text?.trim() ?? '';
+
+            if (characterName.length <= 30) {
                 const blacklist = [
                     "Амбридж", "Аббот", "Абернэти", "Бабблинг", "Бербидж", "Белби", "Беллчант", 
                     "Боунс", "Бидль", "Бинс", "Биннс", "Блэк", "Блек", "Блетчли", "Берк", "Бёрк", 
@@ -442,17 +487,16 @@ vk.updates.on('message_new', async (context: any, next: any) => {
                     "Чанг", "Шафик", "Шевалье", "Эванс", "Эйвери", "Яксли"
                 ]
                 
-                const temp = name.text.split(' ')
                 let warner = false
                 
-                if (name.text.replace(/[^а-яА-Я -]/gi, '') != name.text) {
+                if (characterName.replace(/[^а-яА-Я -]/gi, '') != characterName) {
                     await context.send(`💡 Внимание! Пишите только русскими символами (пробелы и дефисы разрешены)`)
                     warner = true
                 }
 
                 if (warner == false) {
                     // Проверяем на наличие канонных имен в любой части имени
-                    const nameParts = name.text.split(/[\s-]+/);
+                    const nameParts = characterName.split(/[\s-]+/);
                     for (let i = 0; i < nameParts.length; i++) {
                         for (let j = 0; j < blacklist.length; j++) {
                             if (nameParts[i].toLowerCase() === blacklist[j].toLowerCase()) {
@@ -467,7 +511,7 @@ vk.updates.on('message_new', async (context: any, next: any) => {
 
                 if (warner == false) {
                     name_check = true
-                    datas.push({name: `${name.text}`})
+                    datas.push({name: `${characterName}`})
                 } else {
                     await context.send(`✍️ Введите имя персонажа должным образом!`)
                 }
@@ -603,7 +647,8 @@ vk.updates.on('message_new', async (context: any, next: any) => {
                     optionsText += `${opt.emoji} — ${opt.text}\n`;
                 });
 
-                const answer = await context.question(
+                const answer = await askQuestion(
+                    context,
                     `🧷 Вопрос ${qIndex + 1} из ${allQuestions.length}:\n\n${question.text}${optionsText}\n👇 Выберите вариант, нажав на соответствующую кнопку:`,
                     {
                         keyboard: keyboard,
@@ -611,26 +656,28 @@ vk.updates.on('message_new', async (context: any, next: any) => {
                     }
                 );
                 
-                if (answer.isTimeout) { 
+                if (!answer) { 
                     await context.send('⏰ Время ожидания на ответ истекло!')
                     return;
                 }
                 
-                if (!answer.payload) {
+                const answerPayload = answer.messagePayload as { command?: string } | undefined;
+
+                if (!answerPayload?.command) {
                     await context.send(`💡 Нажмите на одну из кнопок с иконками!`);
                 } else {
-                    result += `${answer.payload.command} `;
+                    result += `${answerPayload.command} `;
                     answer_check = true;
                 }
             }
         }
         
         const ans = result.split(" ")
-        const priority: Config | null = await prisma.config.findFirst({}) ? await prisma.config.findFirst({}) : await prisma.config.create({ data: { target1:`grif`, target2:`coga`, target3:`puff`, target4:`sliz` } })
-        const target1 = priority!.target1!
-        const target2 = priority!.target2!
-        const target3 = priority!.target3!
-        const target4 = priority!.target4!
+        const priority = await getConfig()
+        const target1 = priority.target1
+        const target2 = priority.target2
+        const target3 = priority.target3
+        const target4 = priority.target4
         const complet:any = {
             [target4]: 0,
             [target3]: 0,
@@ -687,10 +734,5 @@ vk.updates.on('message_new', async (context: any, next: any) => {
     // Если ни одно условие не сработало, передаем дальше
     return await next();
 })
+}
 
-vk.updates.start().then(async () => {
-    await Logger('✅ Бот успешно запущен!')
-    await Start_Worker_API_Bot()
-}).catch(console.error);
-
-setInterval(Worker_Checker, 86400000);

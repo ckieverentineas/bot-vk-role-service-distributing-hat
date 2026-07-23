@@ -33,9 +33,10 @@ model Headman {
 }
 
 model Config {
-  id     Int      @id @default(autoincrement())
-  target1 String
-  target2 String
-  target3 String
-  target4 String
+  id        Int    @id @default(autoincrement())
+  target1   String
+  target2   String
+  target3   String
+  target4   String
+  resetCode String @default("1000-7")
 }

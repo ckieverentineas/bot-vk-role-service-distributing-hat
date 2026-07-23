@@ -1,12 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { HearManager } from "@vk-io/hear";
 import { randomInt } from "crypto";
-import { Keyboard, KeyboardBuilder } from "vk-io";
-import { IQuestionMessageContext } from "vk-io-question";
+import { Keyboard, KeyboardBuilder, MessageContext } from "vk-io";
+import { QuestionMessageContext } from "vk-io-question";
 
 const prisma = new PrismaClient()
 
-export function InitGameRoutes(hearManager: HearManager<IQuestionMessageContext>): void {
+export function InitGameRoutes(hearManager: HearManager<MessageContext & QuestionMessageContext>): void {
 	/*hearManager.hear(/init/, async (context) => {
 		//user
 		const user_type = await prisma.userType.createMany({

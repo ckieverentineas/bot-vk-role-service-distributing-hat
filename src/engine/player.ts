@@ -1,22 +1,27 @@
-import { Config, Headman, PrismaClient } from "@prisma/client";
+import { Headman, PrismaClient } from "@prisma/client";
 import { HearManager } from "@vk-io/hear";
 import { randomInt } from "crypto";
 import { send } from "process";
-import { Attachment, Keyboard, KeyboardBuilder } from "vk-io";
-import { IQuestionMessageContext } from "vk-io-question";
+import { Attachment, Keyboard, KeyboardBuilder, MessageContext } from "vk-io";
+import { QuestionMessageContext } from "vk-io-question";
 import * as xlsx from 'xlsx';
 import * as fs from 'fs';
-import { answerTimeLimit, chat_id, root, timer_text, vk, resetCode } from "..";
+import { answerTimeLimit, chat_id, root, timer_text, vk } from "..";
 import prisma from "./prisma_client";
 import { Logger } from "./helper";
+import { askQuestion } from "./question";
+import { getConfig, setResetCode, updateConfig } from "./config";
 
-export function registerUserRoutes(hearManager: HearManager<IQuestionMessageContext>): void {
+export function registerUserRoutes(hearManager: HearManager<MessageContext & QuestionMessageContext>): void {
     
     hearManager.hear(/^!протего\s+(.+)/i, async (context) => {
         const newCode = context.$match[1].trim();
+        if (!await isGroupAdmin(context.senderId)) {
+            return await context.send(`🚫 Доступ запрещён!\n\n⚡ Эта команда доступна только Хранителям и администраторам Хогвартса!`);
+        }
+
         if (newCode.length > 0) {
-            const module = require('..');
-            module.resetCode = newCode;
+            await setResetCode(newCode);
             
             await context.send(`🔮 Магический код обновлён!\n\n🛡️ Новый код сброса установлен: "${newCode}"\n\n⚡ Теперь любой может использовать этот код для удаления своего профиля!`);
             await Logger(`Пользователь @id${context.senderId} изменил код сброса на: ${newCode}`);
@@ -102,7 +107,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         
         let answer_check = false
         while (answer_check == false) {
-            const answer1 = await context.question(
+            const answer1 = await askQuestion(context,
                 `🦝 Енотик поднимает голову от счётной машинки: \n"Привет! Я тут статистику считаю...\n\n🧮 Скажи-ка, сколько будет 2+2?"`,
                 { 
                     keyboard: Keyboard.builder()
@@ -113,11 +118,12 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 }
             )
             
-            if (answer1.isTimeout) { 
+            if (!answer1) { 
                 return await context.send('⏰ Енотик зевнул: "Ладно, потом посчитаем..."') 
             }
             
             answer_check = true
+            const answer1Payload = answer1.messagePayload as { command?: string } | undefined;
             
             if (answer1.text == `22ежа`) {
                 await context.sendDocuments({ 
@@ -141,7 +147,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                     message: `🦝 Енотик протягивает вам папку: \n"Вот отчёт по всем студентам Хогвартса Онлайн!\n\n📈 Считал весь день, пока бамбук жевал премиум-класса.\n\n🎓 Здесь всё: от первого курсанта до сегодняшних новичков!"`
                 });
                 
-            } else if (answer1.payload?.command === 'yes') {
+            } else if (answer1Payload?.command === 'yes') {
                 await context.send(`🦝 Енотик кивает: "Правильно! Но это слишком просто...\n\n📊 Вот тебе обычный отчёт по студентам!"`);
                 
                 await context.sendDocuments({
@@ -186,7 +192,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 await Logger('👥 Старосты инициализированы!')
             }
             
-            const answer8 = await context.question(
+            const answer8 = await askQuestion(context,
                 `🎓 Выбор факультета для смены старосты\n\n⌛ Выберите факультет:`,
                 {
                     keyboard: Keyboard.builder()
@@ -199,11 +205,13 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 }
             )
             
-            if (answer8.isTimeout) { 
+            if (!answer8) { 
                 return await context.send('⏰ Время ожидания истекло!') 
             }
             
-            if (!answer8.payload) {
+            const answer8Payload = answer8.messagePayload as { command?: string } | undefined;
+
+            if (!answer8Payload?.command) {
                 await context.send(`💡 Пожалуйста, используйте кнопки для выбора!`)
             } else {
                 const data: any = { 
@@ -213,24 +221,24 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                     grif: get_headman.grif 
                 }
                 
-                const name = await context.question(
+                const name = await askQuestion(context,
                     `✍️ Введите ссылку на нового старосту факультета ${answer8.text}:`,
                     timer_text
                 )
                 
-                if (name.isTimeout) { 
+                if (!name) { 
                     return await context.send('⏰ Время ожидания истекло!') 
                 }
                 
-                data[answer8.payload.command] = name.text
+                data[answer8Payload.command] = name.text
                 const upa = await prisma.headman.update({ 
                     where: { id: get_headman!.id }, 
                     data 
                 })
                 
-                await context.send(`✅ Староста успешно обновлён!\n\n🏆 Факультет: ${answer8.text}\n👤 Новый староста: ${data[answer8.payload.command]}`);
+                await context.send(`✅ Староста успешно обновлён!\n\n🏆 Факультет: ${answer8.text}\n👤 Новый староста: ${data[answer8Payload.command]}`);
                 
-                await Logger(`Староста факультета ${answer8.payload.command} изменен на: ${data[answer8.payload.command]}`);
+                await Logger(`Староста факультета ${answer8Payload.command} изменен на: ${data[answer8Payload.command]}`);
                 answer_check = true
             }
         }
@@ -264,14 +272,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             return await context.send(`🚫 Доступ запрещён!\n\n⚡ Эта команда доступна только Хранителям и администраторам Хогвартса!`) 
         }
         
-        const quest_control: Config | null = await prisma.config.findFirst({}) ? await prisma.config.findFirst({}) : await prisma.config.create({ 
-            data: { 
-                target1:`grif`, 
-                target2:`coga`, 
-                target3:`puff`, 
-                target4:`sliz` 
-            } 
-        })
+        const quest_control = await getConfig()
         
         let answer_check = false
         let facult = ``
@@ -285,7 +286,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         );
         
         while (answer_check == false) {
-            const answer2 = await context.question(
+            const answer2 = await askQuestion(context,
                 `🎯 Выбор факультета для изменения приоритета\n\nВыберите факультет:`,
                 {
                     keyboard: Keyboard.builder()
@@ -298,14 +299,16 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 }
             )
             
-            if (answer2.isTimeout) { 
+            if (!answer2) { 
                 return await context.send('⏰ Время ожидания истекло!') 
             }
             
-            if (!answer2.payload) {
+            const answer2Payload = answer2.messagePayload as { command?: string } | undefined;
+
+            if (!answer2Payload?.command) {
                 await context.send(`💡 Пожалуйста, используйте кнопки для выбора!`)
             } else {
-                facult += `${answer2.payload.command}`
+                facult += `${answer2Payload.command}`
                 answer_check = true
             }
         }
@@ -314,7 +317,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         let priority = ``
         
         while (answer_check2 == false) {
-            const answer2 = await context.question(
+            const answer2 = await askQuestion(context,
                 `📊 Установка приоритета для ${facult.toUpperCase()}\n\nВыберите место:`,
                 {
                     keyboard: Keyboard.builder()
@@ -327,14 +330,16 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 }
             )
             
-            if (answer2.isTimeout) { 
+            if (!answer2) { 
                 return await context.send('⏰ Время ожидания истекло!') 
             }
             
-            if (!answer2.payload) {
+            const answer2Payload = answer2.messagePayload as { command?: string } | undefined;
+
+            if (!answer2Payload?.command) {
                 await context.send(`💡 Пожалуйста, используйте кнопки для выбора!`)
             } else {
-                priority += `${answer2.payload.command}`
+                priority += `${answer2Payload.command}`
                 answer_check2 = true
             }
         }
@@ -349,30 +354,26 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         
         switch (priority) {
             case `1`:
-                res = await prisma.config.update({ 
-                    where: { id: quest_control?.id }, 
-                    data: { target1: facult } 
+                res = await updateConfig({ 
+                    target1: facult
                 })
                 await context.send(`✅ Приоритет обновлён!\n\n🥇 ${facultyNames[facult]} теперь на 1-м месте!`);
                 break;
             case `2`:
-                res = await prisma.config.update({ 
-                    where: { id: quest_control?.id }, 
-                    data: { target2: facult } 
+                res = await updateConfig({ 
+                    target2: facult
                 })
                 await context.send(`✅ Приоритет обновлён!\n\n🥈 ${facultyNames[facult]} теперь на 2-м месте!`);
                 break;
             case `3`:
-                res = await prisma.config.update({ 
-                    where: { id: quest_control?.id }, 
-                    data: { target3: facult } 
+                res = await updateConfig({ 
+                    target3: facult
                 })
                 await context.send(`✅ Приоритет обновлён!\n\n🥉 ${facultyNames[facult]} теперь на 3-м месте!`);
                 break;
             case `4`:
-                res = await prisma.config.update({ 
-                    where: { id: quest_control?.id }, 
-                    data: { target4: facult } 
+                res = await updateConfig({ 
+                    target4: facult
                 })
                 await context.send(`✅ Приоритет обновлён!\n\n📊 ${facultyNames[facult]} теперь на 4-м месте!`);
                 break;
